@@ -6,9 +6,9 @@ const nextConfig: NextConfig = {
         remotePatterns: [
             {
                 protocol: "https",
-                hostname: "avatar.vercel.sh",
+                hostname: "ui-avatars.com",
                 port: "",
-                pathname: "/**",
+                pathname: "/api/**",
             },
             {
                 protocol: "https",
@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
                 hostname: "avatar.iran.liara.run",
                 port: "",
                 pathname: "/**",
+            },
+            {
+                protocol: "https",
+                hostname: "lh3.googleusercontent.com",
             },
         ],
     },

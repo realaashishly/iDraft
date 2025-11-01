@@ -171,6 +171,7 @@ export async function getAgentChatHistoryAction(
             role: msg.role,
             content: msg.content,
             // Map fileMetadata.name to fileName
+            createdAt: msg.createdAt,
             fileName: msg.fileMetadata?.name,
         }));
 

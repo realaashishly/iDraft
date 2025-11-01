@@ -4,6 +4,7 @@
 import { clientPromise } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { type Asset } from "@/lib/types";
+import { ObjectId } from "mongodb";
 
 interface AssetData {
   title: string;
@@ -11,6 +12,11 @@ interface AssetData {
   fileUrl: string;
   fileType: string;
   fileSize: string;
+}
+
+interface UpdateAssetPayload {
+  title: string;
+  description: string;
 }
 
 export async function createAsset(assetData: AssetData) {
@@ -78,4 +84,86 @@ export async function getAssets(): Promise<Asset[]> {
         console.error("Failed to fetch assets:", error);
         return []; // Return empty array on error
     }
+}
+
+
+export async function updateAsset(
+  assetId: string,
+  payload: UpdateAssetPayload
+) {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("assets");
+
+    // Convert the string ID back to a MongoDB ObjectId
+    const objectId = new ObjectId(assetId);
+
+    const updateDocument = {
+      $set: {
+        title: payload.title,
+        description: payload.description,
+        updatedAt: new Date(), // Optional: track updates
+      },
+    };
+
+    // Find the document and update it, returning the *new* document
+    const findOneAndUpdateResult = await collection.findOneAndUpdate(
+      { _id: objectId },
+      updateDocument,
+      { returnDocument: "after" } // Returns the document *after* the update
+    );
+
+    if (!findOneAndUpdateResult) {
+      return { success: false, error: "Asset not found." };
+    }
+
+    const updatedDoc = findOneAndUpdateResult;
+
+    // Serialize the updated document to match the Asset type
+    const savedAsset = {
+      id: updatedDoc._id.toString(),
+      title: updatedDoc.title,
+      description: updatedDoc.description,
+      fileUrl: updatedDoc.fileUrl,
+      fileType: updatedDoc.fileType,
+      fileSize: updatedDoc.fileSize,
+      createdAt: updatedDoc.createdAt,
+      updatedAt: updatedDoc.updatedAt,
+    };
+
+    revalidatePath("/assets"); // Revalidate the path to show new data
+    return { success: true, data: savedAsset };
+  } catch (error) {
+    console.error("Failed to update asset:", error);
+    return { success: false, error: "Failed to update asset." };
+  }
+}
+
+// --- NEW FUNCTION: deleteAsset ---
+/**
+ * Deletes an asset from the database.
+ * @param assetId The string ID of the asset to delete.
+ */
+export async function deleteAsset(assetId: string) {
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("assets");
+
+    // Convert the string ID back to a MongoDB ObjectId
+    const objectId = new ObjectId(assetId);
+
+    const deleteResult = await collection.deleteOne({ _id: objectId });
+
+    if (deleteResult.deletedCount === 0) {
+      return { success: false, error: "Asset not found." };
+    }
+
+    revalidatePath("/assets"); // Revalidate the path to update the list
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete asset:", error);
+    return { success: false, error: "Failed to delete asset." };
+  }
 }

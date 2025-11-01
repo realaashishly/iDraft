@@ -6,7 +6,9 @@ const client = new MongoClient(process.env.MONGODB_URI!);
 const db = client.db();
 
 export const auth = betterAuth({
+    debug: true,
     // --- Update adapter to use your cached connection promise ---
+
     database: mongodbAdapter(db, {
         client,
     }),
@@ -33,6 +35,11 @@ export const auth = betterAuth({
                 required: true,
                 defaultValue: 10,
                 input: false,
+            },
+            geminiApiKey: {
+                type: "string",
+                required: false,
+                defaultValue: "",
             },
         },
     },

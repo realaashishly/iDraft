@@ -44,8 +44,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { type Agent } from "@/action/agentActions";
 import { useSession } from "@/lib/auth-client";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { generateAiContent, type AiResponse } from "@/action/aiResponse";
 import {
     getAgentChatHistoryAction,
     saveUserChatHistoryAction,
@@ -53,9 +51,19 @@ import {
 } from "@/action/chatActions";
 import { MODELS } from "@/constant/models";
 import { useRouter } from "next/navigation";
+import ChatMessage from "./ChatMessage";
+import {
+    AiResponse,
+    generateAiContent,
+    generateAiContentByUserAPI,
+} from "@/action/aiResponse";
+import {
+    updateUserGeminiApiKeyAction,
+    decrementMessagesLeftAction,
+} from "@/action/userActions";
 
 // Define message structure for display
-interface ChatMessageProps {
+export interface ChatMessageProps {
     id: string;
     sender: "user" | "ai";
     text: string;
@@ -88,6 +96,7 @@ interface AIChatInterfaceProps {
 export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
     // --- Initialization ---
     const router = useRouter();
+    const { data: session } = useSession(); // Get session data
 
     // --- State and Refs ---
     const [messages, setMessages] = useState<ChatMessageProps[]>([]);
@@ -101,8 +110,34 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const messagesLeft = 10;
-    const canSendMessage = messagesLeft > 0;
+    // --- (2) USE SESSION FOR MESSAGES LEFT ---
+    const userApiKey = session?.user.geminiApiKey;
+
+    // --- Client-side state for reactive UI ---
+    const [apiKeyExists, setApiKeyExists] = useState(
+        userApiKey && userApiKey.trim() !== ""
+    );
+    const [currentMessagesLeft, setCurrentMessagesLeft] = useState(
+        session?.user?.messagesLeft ?? 0
+    );
+    // --- THIS IS NEW ---
+    // This state holds the *saved* key for display
+    const [savedApiKey, setSavedApiKey] = useState(
+        session?.user.geminiApiKey || ""
+    );
+
+    // --- Syncs client state with the session when it loads or updates ---
+    useEffect(() => {
+        if (session) {
+            const key = session.user.geminiApiKey;
+            setApiKeyExists(key && key.trim() !== "");
+            setCurrentMessagesLeft(session.user.messagesLeft ?? 0);
+            setSavedApiKey(key || ""); // --- ADDED THIS LINE ---
+        }
+    }, [session]); // Re-run this logic ANY time the session object changes
+
+    // User can send if they have messages OR if they have their own API key
+    const canSendMessage = currentMessagesLeft > 0 || apiKeyExists;
 
     // Function to handle fetching and setting messages
     const fetchAndSetHistory = useCallback(async () => {
@@ -155,6 +190,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
         event.target.value = "";
     };
 
+    // --- (3) MODIFIED SEND MESSAGE HANDLER ---
     const handleSendMessage = async (
         event?: FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>
     ) => {
@@ -196,15 +232,30 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
         setAttachedFile(null);
 
         try {
-            // 2. Call generateAiContent
-            const result: AiResponse = await generateAiContent(
-                undefined,
-                agent.id,
-                trimmedInput,
-                agent.systemInstructions,
-                userMessage.fileName ? fileToSend : null
-            );
+            // 2. CHECK WHICH AI FUNCTION TO CALL
+            let result: AiResponse; // Declare result variable
 
+            if (apiKeyExists) {
+                // User has their own key. Do NOT decrement messages.
+                console.log("Using user's API key.");
+                result = await generateAiContentByUserAPI(
+                    agent.id,
+                    trimmedInput,
+                    agent.systemInstructions,
+                    userMessage.fileName ? fileToSend : null
+                );
+            } else {
+                // User does NOT have a key. Use the system key and plan to decrement.
+                console.log("Using system API key.");
+                result = await generateAiContent(
+                    agent.id,
+                    trimmedInput,
+                    agent.systemInstructions,
+                    userMessage.fileName ? fileToSend : null
+                );
+            }
+
+            // 3. Check for AI call failure
             if (!result.success) {
                 throw new Error(
                     result.error ||
@@ -212,10 +263,26 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 );
             }
 
+            // 4. AI call was SUCCESSFUL. Now decrement *only if* needed.
+            if (!apiKeyExists) {
+                console.log("AI success, decrementing message count.");
+                const decrementResult = await decrementMessagesLeftAction();
+
+                if (decrementResult.success) {
+                    // --- Manually update client state ---
+                    setCurrentMessagesLeft((prevCount) => prevCount - 1);
+                } else {
+                    console.error(
+                        "Failed to decrement message count:",
+                        decrementResult.message
+                    );
+                }
+            }
+
+            // 5. Prepare AI response payloads (common logic)
             const aiResponseText = result.text || "No response received.";
             const aiResponseTime = new Date();
 
-            // 3. Prepare AI response payloads
             const aiMessagePayload: MessagePayload = {
                 role: "model",
                 content: aiResponseText,
@@ -229,7 +296,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 createdAt: aiResponseTime,
             };
 
-            // 4. Save the entire turn to the new user-centric history
+            // 6. Save the entire turn (common logic)
             const saveResult = await saveUserChatHistoryAction({
                 agentId: agent.id,
                 userMessage: userMessagePayload,
@@ -240,7 +307,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 console.warn("Failed to save chat history:", saveResult.error);
             }
 
-            // 5. Update the UI with the final AI response
+            // 7. Update the UI (common logic)
             setMessages((prev) => [...prev, aiResponse]);
         } catch (error: any) {
             console.error("Chat failure:", error);
@@ -255,6 +322,8 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 createdAt: new Date(),
             };
             setMessages((prev) => [...prev, errorMsg]);
+
+            // No re-credit logic needed, as we only decrement on success.
         } finally {
             setIsSending(false);
         }
@@ -263,7 +332,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
     const selectedModelName =
         MODELS.find((m) => m.id === selectedModel)?.name || "Select Model";
 
-    const { data: session } = useSession();
+    // const { data: session } = useSession(); // Already defined above
     if (!session?.user || !agent) {
         if (!agent) {
             return (
@@ -281,11 +350,46 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
         );
     }
 
-    // --- Helper Component: Chat Settings Modal (unchanged) ---
+    // --- Helper Component: Chat Settings Modal ---
     const ChatSettingsModal = () => {
         const [isDeleting, setIsDeleting] = useState(false);
-        const [apiKey, setApiKey] = useState("");
         const [showConfirmation, setShowConfirmation] = useState(false);
+
+        // --- (4) POPULATE API KEY FROM SESSION ---
+        // This state is for the *input field*
+        const [apiKeyInput, setApiKeyInput] = useState(""); 
+        const [isUpdatingKey, setIsUpdatingKey] = useState(false);
+        const [keyStatus, setKeyStatus] = useState<string>("");
+
+        const handleUpdateApiKey = async () => {
+            setKeyStatus("");
+            const trimmedApiKey = apiKeyInput.trim();
+
+            setIsUpdatingKey(true);
+            try {
+                // 1. Call the Server Action with the input's value
+                const result = await updateUserGeminiApiKeyAction(
+                    trimmedApiKey
+                );
+
+                if (result.success) {
+                    setKeyStatus("✅ " + result.message);
+                    // --- Update client state ---
+                    setApiKeyExists(trimmedApiKey !== "");
+                    setSavedApiKey(trimmedApiKey); // Update the displayed key
+                    setApiKeyInput(""); // Clear the input field
+                } else {
+                    setKeyStatus(
+                        "❌ " + (result.message || "Failed to update key.")
+                    );
+                }
+            } catch (error) {
+                console.error("API Key update error:", error);
+                setKeyStatus("❌ An unexpected error occurred.");
+            } finally {
+                setIsUpdatingKey(false);
+            }
+        };
 
         const handleDeleteHistory = async () => {
             setIsDeleting(true);
@@ -311,7 +415,11 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 open={isSettingsModalOpen}
                 onOpenChange={(open) => {
                     setIsSettingsModalOpen(open);
-                    if (!open) setShowConfirmation(false);
+                    if (!open) {
+                        setShowConfirmation(false);
+                        setKeyStatus(""); // Clear status when closing modal
+                        setApiKeyInput(""); // Clear input field on close
+                    }
                 }}
             >
                 <DialogContent className='sm:max-w-[450px]'>
@@ -328,21 +436,54 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                             <>
                                 <div className='space-y-2'>
                                     <label className='text-sm font-medium flex items-center gap-2'>
-                                        <Key className='h-4 w-4 text-primary' />{" "}
-                                        Set API Key (Local)
+                                        <Key className='h-4 w-4 text-blue-400' />{" "}
+                                        Set Gemini API Key
                                     </label>
-                                    <Input
-                                        type='password'
-                                        placeholder='sk-...'
-                                        value={apiKey}
-                                        onChange={(e) =>
-                                            setApiKey(e.target.value)
-                                        }
-                                    />
-                                    <p className='text-xs text-muted-foreground'>
-                                        This is a placeholder for local API key
-                                        storage.
-                                    </p>
+                                    <div className='flex gap-2'>
+                                        <Input
+                                            type='password' // <-- Kept as password
+                                            placeholder='Enter new key (or blank to remove)'
+                                            value={apiKeyInput} // <-- Use new input state
+                                            onChange={(e) =>
+                                                setApiKeyInput(e.target.value)
+                                            }
+                                            disabled={isUpdatingKey}
+                                        />
+                                        <Button
+                                            onClick={handleUpdateApiKey}
+                                            disabled={isUpdatingKey}
+                                        >
+                                            {isUpdatingKey ? (
+                                                <Loader2 className='h-4 w-4 animate-spin' />
+                                            ) : (
+                                                "Save"
+                                            )}
+                                        </Button>
+                                    </div>
+
+                                    {/* --- THIS IS THE NEWLY ADDED PART --- */}
+                                    {savedApiKey ? (
+                                        <p className="text-xs text-zinc-400 mt-2">
+                                            Current key: <span className="font-mono">{savedApiKey}</span>
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-zinc-500 mt-2">
+                                            No API key is currently saved.
+                                        </p>
+                                    )}
+                                    {/* --- END OF NEW PART --- */}
+                                    
+                                    {keyStatus && (
+                                        <p
+                                            className={`text-xs ${
+                                                keyStatus.startsWith("✅")
+                                                    ? "text-green-500"
+                                                    : "text-red-500"
+                                            }`}
+                                        >
+                                            {keyStatus}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className='space-y-2'>
@@ -466,12 +607,23 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
     };
 
     // --- JSX Rendering ---
+    // Helper function to get placeholder text
+    const getPlaceholderText = () => {
+        if (isLoadingHistory) return "Loading chat...";
+        // Use client state
+        if (apiKeyExists) return `Ask ${agent.name}... (Using your API key)`;
+        // Use client state
+        if (canSendMessage) 
+            return `Ask ${agent.name}... (${currentMessagesLeft} left)`;
+        return "Message limit reached.";
+    };
+
     return (
         <div className='relative flex flex-col h-[90vh] bg-zinc-950 text-zinc-300 font-sans overflow-hidden'>
             <Button
                 variant='ghost'
                 onClick={() => router.back()}
-                className='text-zinc-400 hover:text-white -ml-2 justify-start absolute top-0 left-0' // Removed -ml-2 if it causes issues, but kept justify-start
+                className='text-zinc-400 hover:text-white -ml-2 justify-start absolute top-0 left-0'
                 disabled={isSending || isLoadingHistory}
             >
                 <ArrowLeft className='mr-2 h-4 w-4' />
@@ -483,7 +635,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
             {/* Message List */}
             <div
                 className='flex-1 overflow-y-auto p-4 space-y-4 w-full max-w-2xl mx-auto scrollbar-thin scrollbar-thumb-transparent scrollbar-track-transparent 
-                               md:scrollbar-default md:scrollbar-thumb-zinc-700 md:scrollbar-track-zinc-900'
+                                md:scrollbar-default md:scrollbar-thumb-zinc-700 md:scrollbar-track-zinc-900'
                 style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
             >
                 {/* Conditional Rendering: Loading, Welcome, or History */}
@@ -494,19 +646,22 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                     </div>
                 ) : messages.length === 0 ? (
                     <div className='flex h-full flex-col items-center justify-center text-center p-8'>
-                        <Image
-                            src={agent.avatarUrl || "/placeholder-avatar.png"}
-                            alt={agent.name}
-                            width={80}
-                            height={80}
-                            className='rounded-full object-cover mb-4 opacity-75'
-                        />
+                        <div className='relative w-20 h-20 rounded-full overflow-hidden mb-4 opacity-75'>
+                            <Image
+                                src={
+                                    agent.avatarUrl || "/placeholder-avatar.png"
+                                }
+                                alt={agent.name}
+                                layout='fill'
+                                className='object-cover'
+                            />
+                        </div>
+
                         <h2 className='text-xl font-semibold text-white mb-2'>
                             Meet {agent.name}, {agent.title}
                         </h2>
-                        <p className='text-zinc-400 max-w-sm'>
-                            Ask your first question or upload a document to
-                            begin a new chat session.
+                        <p className='text-zinc-400 max-w-xl'>
+                            {agent.description}
                         </p>
                     </div>
                 ) : (
@@ -573,11 +728,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                             handleSendMessage(e as any);
                                         }
                                     }}
-                                    placeholder={
-                                        canSendMessage && !isLoadingHistory
-                                            ? `Ask ${agent.name}...`
-                                            : "Message limit reached or loading chat."
-                                    }
+                                    placeholder={getPlaceholderText()}
                                     className='w-full bg-transparent text-zinc-100 placeholder:text-zinc-500 resize-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-3 text-sm min-h-[60px] max-h-[150px]'
                                     rows={1}
                                     maxRows={6}
@@ -630,7 +781,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                             disabled={
                                                 isSending || isLoadingHistory
                                             }
-                                            aria-label='Chat settings'
+											aria-label='Chat settings'
                                         >
                                             <Settings className='h-4 w-4' />
                                         </Button>
@@ -690,159 +841,38 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-                                    <Button
-                                        type='submit'
-                                        className='bg-zinc-700 hover:bg-zinc-600 text-zinc-50 rounded-lg w-8 h-8 flex items-center justify-center transition-opacity shrink-0 disabled:opacity-50 disabled:cursor-not-allowed'
-                                        disabled={
-                                            (!inputText.trim() &&
-                                                !attachedFile) ||
-                                            !canSendMessage ||
-                                            isSending ||
-                                            isLoadingHistory
-                                        }
-                                        aria-label='Send message'
-                                    >
-                                        {isSending ? (
-                                            <Loader2 className='h-4 w-4 animate-spin' />
-                                        ) : (
-                                            <Send className='h-4 w-4' />
+
+                                    {/* --- Add message count and Send button --- */}
+                                    <div className="flex items-center gap-2">
+                                        {/* Only show count if user does NOT have an API key */}
+                                        {!apiKeyExists && (
+                                            <span className="text-xs text-zinc-500">
+                                                {currentMessagesLeft} left
+                                            </span>
                                         )}
-                                    </Button>
+                                        <Button
+                                            type='submit'
+                                            className='bg-zinc-700 hover:bg-zinc-600 text-zinc-50 rounded-lg w-8 h-8 flex items-center justify-center transition-opacity shrink-0 disabled:opacity-50 disabled:cursor-not-allowed'
+                                            disabled={
+                                                (!inputText.trim() &&
+                                                    !attachedFile) ||
+                                                !canSendMessage ||
+                                                isSending ||
+                                                isLoadingHistory
+                                            }
+											aria-label='Send message'
+                                        >
+                                            {isSending ? (
+                                                <Loader2 className='h-4 w-4 animate-spin' />
+                                            ) : (
+                                                <Send className='h-4 w-4' />
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </form>
                     </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// --- ChatMessage Component (Updated Copy Button and Time Position) ---
-function ChatMessage({
-    message,
-    agent,
-    session,
-}: {
-    message: ChatMessageProps;
-    agent: Agent;
-    session: {
-        user: {
-            id: string;
-            name: string;
-            email: string;
-            image?: string | null;
-        };
-    } | null;
-}) {
-    const isUser = message.sender === "user";
-    const modelInfo = !isUser
-        ? MODELS.find((m) => m.id === message.model)?.name
-        : null;
-    const agentAvatar = !isUser
-        ? agent.avatarUrl || "/placeholder-avatar.png"
-        : session?.user?.image || "/placeholder-user-avatar.png";
-    const agentName = !isUser ? agent.name : "You";
-
-    // Format the time
-    const timeString = new Date(message.createdAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
-
-    // Copy function
-    const handleCopy = () => {
-        if (message.text) {
-            navigator.clipboard
-                .writeText(message.text)
-                .then(() => {
-                    console.log("Message copied to clipboard!");
-                })
-                .catch((err) => {
-                    console.error("Failed to copy message: ", err);
-                });
-        }
-    };
-
-    return (
-        <div
-            className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}
-        >
-            {/* Icon/Avatar */}
-            <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
-                    isUser ? "order-2" : "order-1"
-                }`}
-            >
-                {isUser ? (
-                    <Avatar className='h-8 w-8'>
-                        <AvatarImage src={agentAvatar} />
-                        <AvatarFallback>
-                            {session?.user?.name ? session.user.name[0] : "U"}
-                        </AvatarFallback>
-                    </Avatar>
-                ) : (
-                    <Image
-                        src={agentAvatar}
-                        alt={agentName}
-                        width={32}
-                        height={32}
-                        className='object-cover'
-                    />
-                )}
-            </div>
-
-            {/* Message Bubble */}
-            <div
-                className={`max-w-[70%] md:max-w-[65%] p-3 rounded-lg shadow-sm relative ${
-                    isUser
-                        ? "bg-zinc-600 text-zinc-50 rounded-br-none order-1"
-                        : "bg-zinc-800 border border-zinc-700 rounded-bl-none order-2"
-                }`}
-            >
-                {!isUser && (
-                    <p className='text-xs font-medium text-zinc-500 mb-1'>
-                        {agentName} {modelInfo && `(${modelInfo})`}
-                    </p>
-                )}
-
-                {message.text && (
-                    <p className='whitespace-pre-wrap break-words text-sm text-zinc-100'>
-                        {message.text}
-                    </p>
-                )}
-                {message.fileName && (
-                    <div
-                        className={`mt-2 text-xs opacity-80 flex items-center gap-1 border-t pt-1 ${
-                            isUser ? "border-zinc-500/50" : "border-zinc-700"
-                        }`}
-                    >
-                        <Paperclip className='h-3 w-3' /> {message.fileName}
-                    </div>
-                )}
-
-                {/* Actions and Timing Row (BOTTOM OF MSG) */}
-                <div
-                    className={`mt-1 flex items-center gap-1.5 ${
-                        isUser ? "justify-end" : "justify-start"
-                    }`}
-                >
-                    {/* Message Timing */}
-                    <p className={`text-[10px] text-zinc-500`}>{timeString}</p>
-
-                    {/* Copy Button */}
-                    {message.text && (
-                        <Button
-                            variant='ghost'
-                            size='icon-sm'
-                            onClick={handleCopy}
-                            // Styled to be subtle and inline at the bottom
-                            className='text-zinc-500 hover:text-zinc-100 h-5 w-5 p-0 transition-colors'
-                            aria-label='Copy message'
-                        >
-                            <Copy className='h-3 w-3' />
-                        </Button>
-                    )}
                 </div>
             </div>
         </div>

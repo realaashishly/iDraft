@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-    UploadCloud,
-    File as FileIcon,
-    X,
+    // UploadCloud, // <-- No longer used
+    // File as FileIcon, // <-- No longer used
+    // X, // <-- No longer used
     UserCircle,
     ArrowLeft,
 } from "lucide-react";
@@ -27,7 +27,7 @@ interface CreateAgentPayload {
     description: string;
     systemInstructions: string;
     avatarUrl?: string | null;
-    fileUrls?: string[];
+    // fileUrls?: string[]; // <-- Commented out file upload
 }
 
 
@@ -40,14 +40,14 @@ export default function CreateAgentPage() {
     const [systemInstructions, setSystemInstructions] = useState("");
     const [profileImage, setProfileImage] = useState<File | null>(null);
     const [profilePreview, setProfilePreview] = useState<string | null>(null);
-    const [files, setFiles] = useState<File[]>([]);
+    // const [files, setFiles] = useState<File[]>([]); // <-- Commented out file upload
     
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
     const profileInputRef = useRef<HTMLInputElement>(null);
-    const filesInputRef = useRef<HTMLInputElement>(null);
+    // const filesInputRef = useRef<HTMLInputElement>(null); // <-- Commented out file upload
 
     // --- NEW: Extracted Server Action Logic ---
     // This function will be called *after* files are successfully uploaded,
@@ -63,15 +63,17 @@ export default function CreateAgentPage() {
             description,
             systemInstructions,
             avatarUrl: avatarUrl,
-            fileUrls: fileUrls,
+            // fileUrls: fileUrls, // <-- Commented out file upload
         };
 
         try {
+            console.log("Creating Agent");
+            
             const result = await createAgentAction(payload);
             
             if (result.success) {
                 console.log("Agent created successfully:", result.data);
-                router.push('/agents'); // Navigate on success
+                router.push('/prompts'); // Navigate on success
                 // No need to setIsProcessing(false) due to navigation
             } else {
                 // Handle error returned from server action
@@ -100,12 +102,12 @@ export default function CreateAgentPage() {
             // --- THIS IS THE KEY CHANGE ---
             // This callback now handles the server action call.
             onClientUploadComplete: async (res) => {
-                console.log("Upload Completed on Client:", res);
+                
                 setUploadProgress(null); // Clear progress
                 
                 // 1. Parse results (same logic as before)
                 let uploadedAvatarUrl: string | null = null;
-                let uploadedFileUrls: string[] = [];
+                // let uploadedFileUrls: string[] = []; // <-- Commented out file upload
                 let resultIndex = 0;
                 
                 // Check state to see if a profile image was part of this batch
@@ -113,12 +115,13 @@ export default function CreateAgentPage() {
                     uploadedAvatarUrl = res[resultIndex]?.url ?? null;
                     resultIndex++;
                 }
-                uploadedFileUrls = res.slice(resultIndex).map(r => r.url);
+                
+                // uploadedFileUrls = res.slice(resultIndex).map(r => r.url); // <-- Commented out file upload
                 
                 // 2. Call the server action with the new URLs
                 await saveAgent({
                     avatarUrl: uploadedAvatarUrl,
-                    fileUrls: uploadedFileUrls,
+                    fileUrls: [], // <-- Pass empty array as file upload is disabled
                 });
             },
             
@@ -149,6 +152,7 @@ export default function CreateAgentPage() {
         event.target.value = "";
     };
 
+    /* // <-- Commented out file upload handlers
     const handleFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
             const newFiles = Array.from(event.target.files);
@@ -171,6 +175,8 @@ export default function CreateAgentPage() {
     const removeFile = (fileName: string) => {
         setFiles((prev) => prev.filter((f) => f.name !== fileName));
     };
+    */ // <-- End of commented out file upload handlers
+
     // --- End File Input Handlers ---
 
 
@@ -189,12 +195,12 @@ export default function CreateAgentPage() {
         // --- Step 1: Collect Files ---
         const filesToUpload: File[] = [];
         if (profileImage) filesToUpload.push(profileImage);
-        if (files.length > 0) filesToUpload.push(...files);
-
+        // if (files.length > 0) filesToUpload.push(...files); // <-- Commented out file upload
+        
         // --- Step 2: Decide what to do ---
         if (filesToUpload.length > 0) {
             // --- Has files: Start the upload ---
-            console.log("Starting file upload...");
+           
             setUploadProgress(0); // Show progress starting
             
             // !! NO AWAIT !!
@@ -217,7 +223,7 @@ export default function CreateAgentPage() {
             <Button
                 variant="ghost"
                 onClick={() => router.back()}
-                className="absolute top-4 left-4 md:top-8 md:left-8 z-10 text-muted-foreground hover:text-foreground"
+                className="absolute top-4 left-4 md:top-8 md:left-8 z-10 text-muted-foreground hover:text-foreground cursor-pointer"
                 disabled={isProcessing || isUploading}
             >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -233,7 +239,7 @@ export default function CreateAgentPage() {
                         <Label htmlFor="profile-image-upload" className="text-lg font-medium">Profile Image</Label>
                         <div
                             className={`w-32 h-32 rounded-full border-2 border-dashed border-muted-foreground/50 flex items-center justify-center relative overflow-hidden group bg-muted/20 
-                                    ${isProcessing || isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-primary transition-colors'}`}
+                                 ${isProcessing || isUploading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-primary transition-colors'}`}
                             onClick={() => !(isProcessing || isUploading) && profileInputRef.current?.click()}
                         >
                             {profilePreview ? (
@@ -243,7 +249,7 @@ export default function CreateAgentPage() {
                             )}
                             { !(isProcessing || isUploading) && (
                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm font-medium">
-                                Upload
+                                 Upload
                                 </div>
                             )}
                         </div>
@@ -278,7 +284,8 @@ export default function CreateAgentPage() {
                         <p className="text-xs text-muted-foreground">Provide detailed instructions for the AI's behavior and context.</p>
                     </div>
 
-                    {/* Optional File Upload */}
+                    {/* Optional File Upload -- ENTIRE BLOCK COMMENTED OUT */}
+                    {/*
                     <div className="space-y-2">
                         <Label htmlFor="agent-files" className="font-medium">Attach Files (Optional)</Label>
                         <div
@@ -290,7 +297,6 @@ export default function CreateAgentPage() {
                             <p className="text-xs text-muted-foreground">Supports various document and data formats.</p>
                             <input id="agent-files" ref={filesInputRef} type="file" multiple onChange={handleFilesChange} className="hidden" disabled={isProcessing || isUploading} />
                         </div>
-                        {/* Display attached files */}
                         {files.length > 0 && (
                             <div className="mt-3 space-y-2 max-h-32 overflow-y-auto border rounded-md p-2 bg-muted/20">
                                 <p className="text-xs font-medium text-muted-foreground mb-1">Attached files:</p>
@@ -308,12 +314,15 @@ export default function CreateAgentPage() {
                             </div>
                         )}
                     </div>
+                    */}
+                    {/* End of commented out file upload block */}
+
 
                     {/* Upload Progress Indicator */}
                     {isUploading && uploadProgress !== null && (
                         <div className="w-full bg-muted rounded-full h-2.5 dark:bg-zinc-700">
                             <div className="bg-primary h-2.5 rounded-full transition-all duration-150 ease-linear" style={{ width: `${uploadProgress}%` }}></div>
-                            <p className="text-xs text-center text-muted-foreground mt-1">Uploading files... {uploadProgress}%</p>
+                            <p className="text-xs text-center text-muted-foreground mt-1">Creating files... {uploadProgress}%</p>
                         </div>
                     )}
 
@@ -321,9 +330,9 @@ export default function CreateAgentPage() {
 
                     {/* Submit Button */}
                     <div className="flex justify-end pt-4">
-                        <Button type="submit" size="lg" disabled={isUploading || isProcessing || !name || !title}>
+                        <Button type="submit" size="lg" className="cursor-pointer" disabled={isUploading || isProcessing || !name || !title}>
                             {isUploading
-                                ? `Uploading (${uploadProgress ?? 0}%)`
+                                ? `Creating (${uploadProgress ?? 0}%)`
                                 : isProcessing // This will now be true for both upload AND save
                                 ? "Saving Agent..."
                                 : "Create Agent"}

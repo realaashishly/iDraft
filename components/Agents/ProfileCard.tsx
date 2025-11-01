@@ -5,12 +5,12 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type ProfileCardProps = {
-    name: string;
+    name: string | null | undefined; 
     title: string;
-    handle: string;
+    handle: string; 
     description: string;
     status: "Online" | "Offline";
-    avatarUrl: string;
+    avatarUrl: string | null | undefined; 
     showUserInfo?: boolean;
     enableTilt?: boolean;
 };
@@ -27,18 +27,21 @@ export default function ProfileCard({
     const cardRef = useRef<HTMLDivElement>(null);
     const [rotate, setRotate] = useState({ x: 0, y: 0 });
 
+    const safeName = name || "User";
+    const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      safeName
+    )}&size=96&rounded=true&background=random&color=fff`;
+    const avatarSrc = avatarUrl ? avatarUrl : fallbackAvatar;
+
+
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!enableTilt || !cardRef.current) return;
-
         const rect = cardRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
         const xPct = x / rect.width - 0.5;
         const yPct = y / rect.height - 0.5;
-
         const maxRotate = 12;
-
         setRotate({
             x: yPct * -1 * maxRotate,
             y: xPct * maxRotate,
@@ -55,7 +58,7 @@ export default function ProfileCard({
             ref={cardRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className='w-full'
+            className='w-full h-full'
             style={{ perspective: "1000px" }}
         >
             <div
@@ -64,27 +67,35 @@ export default function ProfileCard({
                     transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
                 }}
             >
-                <div className='relative'>
+                {/* --- THIS IS THE FIX --- */}
+                <div className='relative w-24 h-24 mb-4'> {/* 1. Make container square (w-24 h-24 = 96px) */}
                     <Image
-                        src={avatarUrl}
-                        alt={`${name}'s avatar`}
-                        width={96}
-                        height={96}
-                        className='mb-4 rounded-full'
+                        src={avatarSrc} 
+                        alt={`${safeName}'s avatar`}
+                        layout="fill" // 2. Tell Image to fill the container
+                        className='rounded-full object-cover' // 3. Remove w/h props and mb-4 from here
+                        onError={(e) => {
+                          console.error("Failed to load avatar:", avatarSrc);
+                        }}
                     />
                     <span
                         className={cn(
-                            "absolute bottom-4 right-0 block h-3.5 w-3.5 rounded-full border-2 border-card",
+                            // 4. Adjust status dot position for layout="fill"
+                            "absolute bottom-1 right-1 block h-3.5 w-3.5 rounded-full border-2 border-card",
                             status === "Online" ? "bg-green-500" : "bg-gray-500"
                         )}
                     />
                 </div>
+                {/* --- END FIX --- */}
 
                 {showUserInfo && (
                     <>
-                        <h3 className='text-xl font-semibold'>{name}</h3>
-                        <p className='text-primary'>{title}</p>
-                        
+                        <h3 className='text-xl font-semibold truncate w-full' title={safeName}>
+                            {safeName}
+                        </h3>
+                        <p className='text-primary truncate w-full' title={title}>
+                            {title}
+                        </p>
                     </>
                 )}
 

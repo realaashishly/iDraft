@@ -4,11 +4,11 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { clientPromise } from "@/lib/db";
-import { log } from "console";
+import { auth } from "@/lib/auth";
 
 // --- Define the expected input data structure ---
 // Note: This expects URLs for images/files, assuming they are uploaded separately first.
-interface CreateAgentPayload {
+export interface CreateAgentPayload {
     name: string;
     title: string;
     description: string;
@@ -165,4 +165,101 @@ export async function getAgentByIdAction(
             error instanceof Error ? error.message : "Database error occurred.";
         return { success: false, error: errorMessage };
     }
+}
+
+
+export async function updateAgentAction(
+    agentId: string,
+    payload: Partial<CreateAgentPayload> // Use Partial to allow updating only some fields
+): Promise<{ success: true; data: Agent } | { success: false; error: string }> {
+    
+
+
+    try {
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB_NAME!);
+        const agentsCollection = db.collection<AgentDocument>("agents");
+
+        // 3. Prepare update document
+        const updateData = {
+            ...payload,
+            updatedAt: new Date(),
+        };
+
+        // 4. Find and update
+        // You can add `creatorId: session.user.id` to the filter 
+        // to ensure users can only edit their own agents.
+        const updateResult = await agentsCollection.findOneAndUpdate(
+            { _id: new ObjectId(agentId) /*, creatorId: session.user.id */ },
+            { $set: updateData },
+            { returnDocument: "after" } // Get the updated document back
+        );
+
+        if (!updateResult) {
+            return { success: false, error: "Agent not found or update failed." };
+        }
+
+        // 5. Revalidate
+        revalidatePath("/agents");
+        revalidatePath(`/agents/${agentId}`); // Revalidate the specific agent page
+
+        // 6. Format and return
+        const { _id, ...rest } = updateResult;
+        const updatedAgent: Agent = {
+            ...rest,
+            id: _id.toString(),
+            createdAt: updateResult.createdAt,
+            updatedAt: updateResult.updatedAt,
+        };
+
+        return { success: true, data: updatedAgent };
+    } catch (error) {
+        console.error("Failed to update agent:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Database error occurred.";
+        return { success: false, error: errorMessage };
+    }
+}
+
+// ---
+// --- NEW: DELETE AGENT ACTION
+// ---
+export async function deleteAgentAction(
+    agentId: string
+): Promise<{ success: true } | { success: false; error: string }> {
+
+    // 2. Validate ID
+    if (!ObjectId.isValid(agentId)) {
+        return { success: false, error: "Invalid Agent ID format." };
+    }
+
+    try {
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB_NAME!);
+       const agentsCollection = db.collection("agents");
+
+        // 3. Delete
+        // You can add `creatorId: session.user.id` to the filter 
+        // to ensure users can only delete their own agents.
+        const deleteResult = await agentsCollection.deleteOne({
+            _id: new ObjectId(agentId),
+            /* creatorId: session.user.id */
+        });
+
+        if (deleteResult.deletedCount === 0) {
+            return { success: false, error: "Agent not found." };
+        }
+
+        // 4. Revalidate
+        revalidatePath("/agents");
+        revalidatePath(`/agents/${agentId}`);
+
+        // 5. Return success
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete agent:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : "Database error occurred.";
+        return { success: false, error: errorMessage };
+    }
 }

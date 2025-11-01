@@ -1,3 +1,4 @@
+// realaashishly/idraft/iDraft-cffe49e2e238e0f3cb53b3f7957b2658d2ada56a/app/(auth)/signup/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -67,11 +68,12 @@ export default function SignupPage() {
       <div className="w-full max-w-4xl mx-auto">
         <div className="bg-card/50 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl shadow-black/30 md:grid md:grid-cols-2">
           {/* ... Left Side Info ... */}
-           <div className="hidden md:flex flex-col justify-center p-12 from-gray-900 to-black">
+           {/* CORRECTED GRADIENT CLASS HERE */}
+           <div className="hidden md:flex flex-col justify-center p-12 bg-gradient-to-br from-gray-900 to-black">
              <div className="flex flex-col items-center text-center">
-               <h1 className="font-bold text-4xl text-foreground">AgentVault</h1>
+               <h1 className="font-bold text-4xl text-foreground">iDraft</h1>
                <p className="mt-4 text-lg text-muted-foreground">
-                 Your secure hub for AI agents and digital assets.
+                 Your secure hub for proffessional work and digital assets.
                </p>
              </div>
            </div>
@@ -82,7 +84,7 @@ export default function SignupPage() {
                 Create an Account
               </h2>
               <p className="text-muted-foreground mb-4">
-                Join AgentVault to manage your AI agents.
+                Join iDraft to manage your proffessional work.
               </p>
             </div>
 
@@ -178,7 +180,7 @@ export default function SignupPage() {
                    <path d="M5.84,14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43,8.55,1,10.22,1,12s.43,3.45,1.18,4.93l3.66-2.84Z" fill="#FBBC05" />
                    <path d="M12,5.38c1.62,0,3.06.56,4.21,1.64l3.15-3.15C17.45,2.09,14.97,1,12,1,7.7,1,3.99,3.47,2.18,7.07l3.66,2.84c.87-2.6,3.3-4.53,6.16-4.53Z" fill="#EA4335" />
                  </svg>
-              Sign up with Google
+              Continue with Google
             </Button>
 
             {/* ... Sign In Link ... */}

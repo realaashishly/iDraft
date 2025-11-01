@@ -248,12 +248,14 @@ export default function AssetUploadButton({ onUploadComplete }: { onUploadComple
                             variant='outline'
                             onClick={() => setIsOpen(false)}
                             disabled={isUploading || isSaving}
+                            className="cursor-pointer"
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleUpload}
                             disabled={isUploading || isSaving || !file || !title}
+                            className="cursor-pointer"
                         >
                             {isUploading ? "Uploading..." : isSaving ? "Saving..." : "Upload"}
                         </Button>

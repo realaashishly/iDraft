@@ -28,7 +28,7 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
     // Main navigation items
     const navItems = [
         { name: "Dashboard", icon: Home, href: "/dashboard" },
-        { name: "Agents", icon: Users, href: "/agents" },
+        { name: "Prompts", icon: Users, href: "/prompts" },
         { name: "Assets", icon: Package, href: "/assets" },
         { name: "Apps", icon: AppWindow, href: "/apps" },
     ];

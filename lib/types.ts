@@ -6,6 +6,8 @@ export type Asset = {
   fileType?: string;
   fileSize?: string;
   createdAt?: Date;
+  fileName?: string;     // <-- ADD THIS
+  uploadedAt?: Date | string;
 };
 
 export interface NewAsset {

@@ -138,11 +138,11 @@ export function AssetDetailModal({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-2 right-2 z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors text-white"
+                    className="absolute top-2 right-2 z-10 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors text-white cursor-pointer"
                     onClick={onClose}
                     aria-label="Close modal"
                 >
-                    <X className="h-6 w-6" />
+                    <X className="h-6 w-6 cursor-pointer" />
                 </Button>
 
                 {/* Left - Asset Preview */}
@@ -191,7 +191,7 @@ export function AssetDetailModal({
                         {/* Download Button */}
                         <Button
                             onClick={handleDownload} // Use the download handler
-                            className="flex-1 h-12 text-base font-bold shadow-[0_0_15px_rgba(94,234,212,0.3)] hover:shadow-[0_0_25px_rgba(94,234,212,0.5)]"
+                            className="flex-1 h-12 text-base font-bold shadow-[0_0_15px_rgba(94,234,212,0.3)] hover:shadow-[0_0_25px_rgba(94,234,212,0.5)] cursor-pointer"
                             disabled={!asset.fileUrl} // Disable if no URL
                         >
                             <Download className="mr-2 h-5 w-5" />
