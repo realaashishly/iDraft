@@ -1,7 +1,7 @@
 // components/dashboard/_components/TodoList.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Import useEffect
 import { 
     ListTodo, 
     Trash2, 
@@ -17,16 +17,56 @@ interface Task {
     isCompleted: boolean;
 }
 
+// --- localStorage and Default Setup ---
+const LOCAL_STORAGE_KEY = "dashboardUserTodos";
+
+// Define default tasks (used for SSR and if no localStorage data exists)
+const defaultTasks: Task[] = [
+    { id: 1, text: "Review recent assets", isCompleted: false },
+    { id: 2, text: "Check prompt usage stats", isCompleted: true },
+    { id: 3, text: "Plan next sprint tasks", isCompleted: false },
+];
+// ---
+
 export default function TodoList() {
     const MAX_TASKS = 5;
     
-    // Initialize with some default tasks (optional)
-    const [tasks, setTasks] = useState<Task[]>([
-        { id: 1, text: "Review recent assets", isCompleted: false },
-        { id: 2, text: "Check prompt usage stats", isCompleted: true },
-        { id: 3, text: "Plan next sprint tasks", isCompleted: false },
-    ]);
+    // Initialize state with defaults
+    // This will be used on the server and for the initial client render
+    const [tasks, setTasks] = useState<Task[]>(defaultTasks);
     const [newTask, setNewTask] = useState("");
+    
+    // State to track if component is mounted (client-side)
+    // This prevents hydration errors and unwanted saves on initial load
+    const [isMounted, setIsMounted] = useState(false);
+
+    // --- localStorage Effects ---
+
+    // Effect 1: Load tasks from localStorage on component mount
+    useEffect(() => {
+        // This code only runs on the client, after hydration
+        const storedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (storedTasks) {
+            try {
+                // If tasks are found, parse and set them as the state
+                setTasks(JSON.parse(storedTasks));
+            } catch (e) {
+                console.error("Error parsing tasks from localStorage", e);
+                // If parsing fails, the defaultTasks state remains
+            }
+        }
+        // Mark the component as mounted
+        setIsMounted(true);
+    }, []); // Empty dependency array [] means this runs only ONCE on mount
+
+    // Effect 2: Save tasks to localStorage whenever 'tasks' state changes
+    useEffect(() => {
+        // Only save to localStorage if the component is mounted
+        // This prevents overwriting stored tasks with defaultTasks on initial render
+        if (isMounted) {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
+        }
+    }, [tasks, isMounted]); // Dependency array: run this effect when 'tasks' or 'isMounted' changes
 
     // --- Task Handlers (Logic is unchanged) ---
 
@@ -37,7 +77,7 @@ export default function TodoList() {
                 text: newTask.trim(),
                 isCompleted: false,
             };
-            setTasks([...tasks, task]);
+            setTasks([...tasks, task]); // This state update will trigger Effect 2
             setNewTask("");
         }
     };
@@ -45,11 +85,11 @@ export default function TodoList() {
     const toggleComplete = (id: number) => {
         setTasks(tasks.map(task => 
             task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
-        ));
+        )); // This state update will trigger Effect 2
     };
 
     const deleteTask = (id: number) => {
-        setTasks(tasks.filter(task => task.id !== id));
+        setTasks(tasks.filter(task => task.id !== id)); // This state update will trigger Effect 2
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -58,7 +98,7 @@ export default function TodoList() {
         }
     };
     
-    // --- Render Logic ---
+    // --- Render Logic (Unchanged) ---
 
     const pendingTasks = tasks.filter(t => !t.isCompleted).length;
 
@@ -107,9 +147,9 @@ export default function TodoList() {
                         >
                             {/* New Checkbox Icon */}
                             {task.isCompleted ? (
-                                <CheckCircle2 className="h-5 w-5 mr-3 text-indigo-400 flex-shrink-0" />
+                                <CheckCircle2 className="h-5 w-5 mr-3 text-indigo-400 shrink-0" />
                             ) : (
-                                <Circle className="h-5 w-5 mr-3 text-zinc-500 group-hover:text-zinc-300 flex-shrink-0" />
+                                <Circle className="h-5 w-5 mr-3 text-zinc-500 group-hover:text-zinc-300 shrink-0" />
                             )}
                             
                             {/* Task Text */}
@@ -118,7 +158,7 @@ export default function TodoList() {
                                 task.isCompleted 
                                     ? 'text-zinc-500 line-through' 
                                     : 'text-zinc-100'
-                            }`}
+                                }`}
                             >
                                 {task.text}
                             </span>

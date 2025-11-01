@@ -31,7 +31,6 @@ import TodoList from "@/components/dashboard/_components/TodoList";
 import StockWidget from "@/components/dashboard/_components/stockCard";
 import DigitalClock from "@/components/dashboard/_components/DigitalClock";
 import Stopwatch from "@/components/dashboard/_components/Stopwatch";
-import CalendarWidget from "@/components/dashboard/_components/CalendarWidget";
 import NotesWidget from "@/components/dashboard/_components/NotesWidget"; // ⬅️ 1. IMPORT NOTES WIDGET
 
 import { type Asset } from "@/lib/types";
@@ -137,7 +136,7 @@ export default function DashboardPage() {
     // 4. Loading/Error UI (Unchanged)
     if (isLoading) {
         return (
-            <div className='flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-100 p-6'>
+            <div className='flex flex-col items-center justify-center min-h-[88vh] bg-zinc-950 text-zinc-100 p-6'>
                 <Loader2 className='h-10 w-10 animate-spin text-zinc-400' />
                 <p className='mt-4 text-zinc-400'>
                     Loading your personalized dashboard...
@@ -202,7 +201,7 @@ export default function DashboardPage() {
                     <CardHeader>
                         <CardTitle>Recent Assets</CardTitle>
                         <CardDescription className='text-zinc-400'>
-                            Your latest uploads, ready to be used.
+                            Latest uploads, ready to be used.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -330,12 +329,7 @@ export default function DashboardPage() {
 
                 {/* 8. STOPWATCH (Row 4, Column 1) */}
                 <Card className='bg-zinc-900 border-zinc-800 text-white shadow-lg lg:col-span-1 h-full'>
-                    <CardHeader>
-                        <CardTitle className='text-base'>Stopwatch</CardTitle>
-                        <CardDescription className='text-zinc-400 text-xs'>
-                            Track your time
-                        </CardDescription>
-                    </CardHeader>
+                    
                     <CardContent>
                         <Stopwatch />
                     </CardContent>

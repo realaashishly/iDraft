@@ -1,8 +1,10 @@
-// components/dashboard/_components/SpotifyConnectPlayer.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
+// Import signIn from next-auth/react
+import { signIn } from 'next-auth/react';
 import { Play, Pause, SkipForward, SkipBack, Music, Loader2 } from 'lucide-react';
+import { FaSpotify } from 'react-icons/fa'; // Added a nice Spotify icon
 
 // NOTE: This component assumes a Spotify Access Token is passed in as a prop.
 // This token MUST be generated on your server (e.g., via NextAuth) with the 'streaming' scope.
@@ -11,76 +13,108 @@ interface SpotifyConnectPlayerProps {
     accessToken: string | null;
 }
 
+// We need this declare to tell TypeScript about the 'window.Spotify' object
+declare global {
+  interface Window {
+    Spotify: any;
+    onSpotifyWebPlaybackSDKReady: () => void;
+  }
+}
+
 export default function SpotifyConnectPlayer({ accessToken }: SpotifyConnectPlayerProps) {
     const [isReady, setIsReady] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [trackName, setTrackName] = useState("Loading Player...");
     const [artistName, setArtistName] = useState("Connect to Spotify");
     const [deviceId, setDeviceId] = useState<string | null>(null);
+    const [player, setPlayer] = useState<any | null>(null); // Store the player instance
     
-    // Placeholder function for playback control (in a real app, this would use fetch/SDK methods)
-    const togglePlayback = () => {
-        // In a real app: use the SDK player instance to toggle play/pause
-        console.log(`Toggling playback on device ${deviceId}`);
-        setIsPlaying(prev => !prev);
-    };
-
-    // 1. Load the Spotify Web Playback SDK script (Crucial step for Client Components)
+    // 1. Load the Spotify Web Playback SDK script
     useEffect(() => {
         if (!accessToken) return;
 
-        // Function to create the <script> tag
         const script = document.createElement('script');
         script.src = "https://sdk.scdn.co/spotify-player.js";
         script.async = true;
         document.body.appendChild(script);
 
-        // Global callback required by the Spotify SDK
         window.onSpotifyWebPlaybackSDKReady = () => {
-            const player = new window.Spotify.Player({
+            const playerInstance = new window.Spotify.Player({
                 name: 'My Dashboard Player',
-                getOAuthToken: cb => { cb(accessToken); },
+                getOAuthToken: (cb: (token: string) => void) => { cb(accessToken); },
                 volume: 0.5
             });
 
+            // Store the player instance in state
+            setPlayer(playerInstance);
+
             // Ready event
-            player.addListener('ready', ({ device_id }) => {
+            playerInstance.addListener('ready', ({ device_id }: { device_id: string }) => {
                 console.log('Ready with Device ID', device_id);
                 setDeviceId(device_id);
                 setIsReady(true);
             });
             
             // Player State Change event
-            player.addListener('player_state_changed', (state) => {
+            playerInstance.addListener('player_state_changed', (state: any) => {
                 if (!state) return;
                 setTrackName(state.track_window.current_track.name);
-                setArtistName(state.track_window.current_track.artists.map(a => a.name).join(', '));
+                setArtistName(state.track_window.current_track.artists.map((a: any) => a.name).join(', '));
                 setIsPlaying(!state.paused);
             });
 
             // Connect to the player
-            player.connect();
+            playerInstance.connect();
         };
 
-        // Cleanup: remove the script and disconnect the player (conceptual)
+        // Cleanup
         return () => {
-            // Logic to disconnect the player instance would go here
-            document.body.removeChild(script);
+            player?.disconnect();
+            if (document.body.contains(script)) {
+              document.body.removeChild(script);
+            }
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accessToken]); // Re-run only if the token changes
 
+    // --- Playback Control Functions ---
+    const togglePlayback = () => {
+        if (!player) return;
+        player.togglePlay();
+    };
+
+    const nextTrack = () => {
+        if (!player) return;
+        player.nextTrack();
+    };
+
+    const prevTrack = () => {
+        if (!player) return;
+        player.previousTrack();
+    };
+
+
+    // --- 1. The "Login Card" ---
+    // This is shown when accessToken is null (user is logged out)
     if (!accessToken) {
         return (
-            <div className="text-center p-4">
-                <Music className="h-6 w-6 mx-auto text-zinc-600 mb-2" />
-                <p className="text-sm text-zinc-400">Please **log in with Spotify** to enable music playback.</p>
-                {/* NOTE: You need a button here that links to your NextAuth/Auth.js sign-in endpoint: 
-                  <button onClick={() => signIn('spotify')}>Login with Spotify</button>
-                */}
+            <div className="text-center p-4 flex flex-col items-center justify-center h-full">
+                <Music className="h-6 w-6 mx-auto text-zinc-600 mb-3" />
+                <p className="text-sm text-zinc-400 mb-4">Connect Spotify to control your music.</p>
+                
+                {/* This is the actual login button */}
+                <button
+                  onClick={() => signIn('spotify')}
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-colors"
+                >
+                  <FaSpotify className="h-5 w-5" />
+                  Login with Spotify
+                </button>
             </div>
         );
     }
     
+    // --- This is shown while the player is loading ---
     if (!isReady) {
         return (
             <div className="flex flex-col items-center justify-center p-4 h-full">
@@ -90,7 +124,8 @@ export default function SpotifyConnectPlayer({ accessToken }: SpotifyConnectPlay
         );
     }
 
-    // Main Player UI
+    // --- 2. The "Music Player" ---
+    // This is shown when accessToken is present and the player is ready
     return (
         <div className="flex flex-col space-y-3 p-2">
             {/* Track Info */}
@@ -107,7 +142,7 @@ export default function SpotifyConnectPlayer({ accessToken }: SpotifyConnectPlay
                 <button 
                     title="Previous" 
                     className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
-                    // onClick={() => player.previousTrack()}
+                    onClick={prevTrack}
                 >
                     <SkipBack className="h-5 w-5" />
                 </button>
@@ -123,7 +158,7 @@ export default function SpotifyConnectPlayer({ accessToken }: SpotifyConnectPlay
                 <button 
                     title="Next" 
                     className="p-2 rounded-full hover:bg-zinc-700 transition-colors"
-                    // onClick={() => player.nextTrack()}
+                    onClick={nextTrack}
                 >
                     <SkipForward className="h-5 w-5" />
                 </button>

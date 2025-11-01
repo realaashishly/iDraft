@@ -6,6 +6,7 @@ import Sidebar from "@/components/sidebar";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Header from "@/components/header";
+import { ActivityProvider } from "@/contexts/ActivityContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,7 +55,10 @@ export default function RootLayout({
                   : ""
               }`}
             >
+              <ActivityProvider>
               {children}
+              </ActivityProvider>
+                
             </main>
           </div>
         </ThemeProvider>
