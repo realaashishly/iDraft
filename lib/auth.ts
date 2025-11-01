@@ -41,6 +41,11 @@ export const auth = betterAuth({
                 required: false,
                 defaultValue: "",
             },
+            profession: {
+                type: "string",
+                required: false,
+                defaultValue: "",
+            },
         },
     },
 });

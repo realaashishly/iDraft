@@ -6,6 +6,12 @@ import { auth } from "@/lib/auth";
 import { clientPromise } from "@/lib/db";
 import { ObjectId } from "mongodb";
 
+interface UpdateUserData {
+    name?: string;
+    profession?: string;
+    image?: string;
+}
+
 export async function updateUserGeminiApiKeyAction(geminiApiKey: string) {
     // --- 1. Get Session ---
     const session = await auth.api.getSession({
@@ -177,10 +183,10 @@ export async function getUserGeminiApiKeyAction() {
         );
 
         if (!user) {
-            return { 
-                success: false, 
-                message: "User not found.", 
-                apiKey: null 
+            return {
+                success: false,
+                message: "User not found.",
+                apiKey: null,
             };
         }
 
@@ -190,13 +196,112 @@ export async function getUserGeminiApiKeyAction() {
             success: true,
             apiKey: user.geminiApiKey || null,
         };
-
     } catch (error) {
         console.error("Failed to get Gemini API key:", error);
         return {
             success: false,
             message: "A server error occurred.",
             apiKey: null,
+        };
+    }
+}
+
+export async function updateUserProfileAction(data: UpdateUserData) {
+    // --- 1. Get Session ---
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session?.user?.id) {
+        return {
+            success: false,
+            message: "Authentication required.",
+        };
+    }
+
+    // --- 2. Validate and Prepare Data ---
+    if (!data || Object.keys(data).length === 0) {
+        return {
+            success: false,
+            message: "No data provided for update.",
+        };
+    }
+
+    const updateDoc: { [key: string]: any } = {};
+
+    // We build a $set object only with the fields that were provided.
+    // This allows for partial updates (e.g., only updating 'name' or 'image').
+
+    if (data.name !== undefined) {
+        if (typeof data.name !== "string" || data.name.length < 2) {
+            return {
+                success: false,
+                message: "Name must be at least 2 characters.",
+            };
+        }
+        updateDoc.name = data.name;
+    }
+
+    if (data.profession !== undefined) {
+        // Allows setting profession to an empty string or null
+        updateDoc.profession = data.profession;
+    }
+
+    if (data.image !== undefined) {
+        if (typeof data.image !== "string" || data.image.length === 0) {
+            return { success: false, message: "Invalid image URL." };
+        }
+        updateDoc.image = data.image;
+    }
+
+    // If no valid fields were added to the update object
+    if (Object.keys(updateDoc).length === 0) {
+        return {
+            success: false,
+            message: "No valid data fields provided for update.",
+        };
+    }
+
+    // --- 3. Execute Update ---
+    try {
+        const client = await clientPromise;
+        const db = client.db(process.env.MONGODB_DB_NAME);
+        const collection = db.collection("user");
+
+        const userId = new ObjectId(session.user.id);
+
+        console.log(`Attempting to update profile for user ${userId}`);
+
+        const updateResult = await collection.findOneAndUpdate(
+            { _id: userId }, // 1. Filter
+            { $set: updateDoc }, // 2. Update document with only provided fields
+            { returnDocument: "after" } // 3. Options
+        );
+
+        if (!updateResult) {
+            console.error(
+                "Failed to update profile: Document not found or update failed."
+            );
+            return {
+                success: false,
+                message: "Failed to update profile. User not found.",
+            };
+        }
+
+        // --- 4. Revalidate and Return Success ---
+        revalidatePath("/profile");
+        revalidatePath("/settings");
+
+        return {
+            success: true,
+            message: "Profile updated successfully.",
+            data: updateResult.value, // Return the updated user
+        };
+    } catch (error) {
+        console.error("Failed to update profile:", error);
+        return {
+            success: false,
+            message: "A server error occurred during profile update.",
         };
     }
 }
