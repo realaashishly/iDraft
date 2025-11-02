@@ -47,12 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // --- Lucide Icons ---
-import {
-    Loader2,
-    Sun,
-    Moon,
-    Laptop,
-} from "lucide-react";
+import { Loader2, Sun, Moon, Laptop } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // --- Page Level Types & Schemas ---
@@ -164,7 +159,6 @@ export function ProfileSettings() {
 
             if (!result.success) throw new Error(result.message);
 
-           
             setMessage({
                 type: "success",
                 text: "Profile updated successfully!",
@@ -187,7 +181,6 @@ export function ProfileSettings() {
             });
             if (!result.success) throw new Error(result.message);
 
-            
             setMessage({
                 type: "success",
                 text: "Avatar updated successfully!",
@@ -386,7 +379,6 @@ function ApiKeysSettings() {
             const result = await updateUserGeminiApiKeyAction(keyToSave);
             if (!result.success) throw new Error(result.message);
 
-            
             setMessage({ type: "success", text: result.message });
             if (!keyToSave) {
                 form.reset({ geminiApiKey: "" }); // Clear form if key was removed
@@ -698,12 +690,7 @@ function AccountSettings() {
                             Sign out of your account on this device.
                         </p>
                     </div>
-                    <Button
-                        variant='outline'
-                        onClick={() =>
-                            signOut()
-                        }
-                    >
+                    <Button variant='outline' onClick={() => signOut()}>
                         Sign Out
                     </Button>
                 </div>
