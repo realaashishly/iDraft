@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
         e.preventDefault();
         setError(null);
         try {
-            const { data, error } = await signIn.email({
+             await signIn.email({
                 email,
                 password,
                 callbackURL: "/dashboard",

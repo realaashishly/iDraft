@@ -266,7 +266,7 @@ export function AddAppModal({
 							{logoFile && !isUploading && (
 								<div className='mt-2 flex items-center justify-between rounded-md border bg-muted/50 p-2 text-sm w-full overflow-hidden'>
 									<div className='flex items-center gap-2 min-w-0 flex-1'>
-										<File className='h-4 w-4 flex-shrink-0' />
+										<File className='h-4 w-4 shrink-0' />
 										<span className='truncate block w-full'>
 											{logoFile.name}
 										</span>
@@ -275,7 +275,7 @@ export function AddAppModal({
 										type='button'
 										variant='ghost'
 										size='icon'
-										className='h-6 w-6 flex-shrink-0 ml-2'
+										className='h-6 w-6 shrink-0 ml-2'
 										onClick={() =>
 											!isProcessing && setLogoFile(null)
 										}

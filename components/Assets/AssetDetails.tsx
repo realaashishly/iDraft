@@ -5,11 +5,11 @@ import { type Asset } from "@/lib/types";
 import {
     X,
     Download,
-    File as FileIcon, // Renamed to avoid conflict with File type
+    File as FileIcon,
     Scaling,
     FileText,
 } from "lucide-react";
-import { Button } from "../ui/button"; // Assuming path is correct
+import { Button } from "../ui/button";
 
 export function AssetDetailModal({
     asset,
@@ -154,8 +154,8 @@ export function AssetDetailModal({
                 {/* Right - Asset Details */}
                 <div className="md:w-2/5 p-6 md:p-8 flex flex-col bg-card rounded-b-xl md:rounded-b-none md:rounded-r-xl overflow-hidden">
                     {/* Make this section scrollable if content overflows */}
-                    <div className="flex-grow overflow-y-auto pr-2"> {/* Added padding-right for scrollbar */}
-                        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2 break-words"> {/* Allow title to wrap */}
+                    <div className="grow overflow-y-auto pr-2"> {/* Added padding-right for scrollbar */}
+                        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2 wrap-break-word"> {/* Allow title to wrap */}
                             {asset.title}
                         </h2>
 
@@ -166,21 +166,21 @@ export function AssetDetailModal({
                         {/* Asset Metadata */}
                         <div className="space-y-4 text-muted-foreground text-sm mb-6"> {/* Added margin-bottom */}
                             <div className="flex items-center">
-                                <FileIcon className="flex-shrink-0 text-base mr-3 w-5 text-center" />
+                                <FileIcon className="shrink-0 text-base mr-3 w-5 text-center" />
                                 <p className="break-all"> {/* Allow long types to wrap */}
                                     File Type: {asset.fileType || "N/A"}
                                 </p>
                             </div>
                             <div className="flex items-center">
-                                <Scaling className="flex-shrink-0 text-base mr-3 w-5 text-center" />
+                                <Scaling className="shrink-0 text-base mr-3 w-5 text-center" />
                                 <p>File Size: {asset.fileSize || "N/A"}</p>
                             </div>
 
                            {/* Only show description if it exists */}
                            {asset.description && (
                                <div className="flex items-start">
-                                   <FileText className="flex-shrink-0 text-base mr-3 w-5 text-center mt-0.5" />
-                                   <p className="break-words">{asset.description}</p> {/* Allow long descriptions to wrap */}
+                                   <FileText className="shrink-0 text-base mr-3 w-5 text-center mt-0.5" />
+                                   <p className="wrap-break-word">{asset.description}</p> {/* Allow long descriptions to wrap */}
                                </div>
                            )}
                         </div>

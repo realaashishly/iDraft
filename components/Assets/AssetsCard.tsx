@@ -152,7 +152,7 @@ export function AssetCard({
 
       {/* --- Tilt Container --- */}
       <div
-        className="relative aspect-[4/3] w-full bg-muted flex items-center justify-center overflow-hidden rounded-xl transform-style-preserve-3d transition-transform duration-300 ease-out"
+        className="relative aspect-4/3 w-full bg-muted flex items-center justify-center overflow-hidden rounded-xl transform-style-preserve-3d transition-transform duration-300 ease-out"
         style={{
           transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         }}
@@ -170,14 +170,14 @@ export function AssetCard({
         )}
 
         {/* --- Overlay Info --- */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 via-black/30 to-transparent">
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-linear-to-t from-black/60 via-black/30 to-transparent">
           <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg flex items-center justify-between text-white">
             <div className="overflow-hidden mr-2">
               <h3 className="font-semibold truncate text-sm">{asset.title}</h3>
               <p className="text-xs text-gray-300 mt-1">{uploadedTime}</p>
             </div>
 
-            <div className="flex items-center flex-shrink-0">
+            <div className="flex items-center shrink-0">
               {asset.fileUrl && (
                 <Button
                   variant="ghost"
@@ -224,7 +224,7 @@ export function AssetCard({
 export function AssetCardSkeleton() {
   return (
     <div className="bg-card rounded-xl overflow-hidden animate-pulse border border-border/10">
-      <div className="aspect-[4/3] bg-muted/40"></div>
+      <div className="aspect-4/3 bg-muted/40"></div>
       <div className="p-4 space-y-2">
         <div className="h-5 w-3/4 bg-muted/40 rounded"></div>
         <div className="h-4 w-1/2 bg-muted/40 rounded"></div>

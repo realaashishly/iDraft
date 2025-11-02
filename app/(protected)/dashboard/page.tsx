@@ -36,6 +36,7 @@ import NotesWidget from "@/components/dashboard/_components/NotesWidget"; // ⬅
 import { type Asset } from "@/lib/types";
 import { useSession } from "@/lib/auth-client";
 import ActivityTracker from "@/components/dashboard/_components/ActivityTracker";
+import { useRouter } from "next/navigation";
 
 // --- (Helper Types and Functions... unchanged) ---
 type Agent = { id: string };
@@ -59,7 +60,7 @@ function getFormattedDate(date: Date | string | undefined): string {
 
 export default function DashboardPage() {
     // 1. Session and State Management (Unchanged)
-    const { data: session, status } = useSession();
+    const { data: session, isPending: status } = useSession();
     const spotifyAccessToken: string | null =
         (session as any)?.accessToken || null;
 
@@ -67,16 +68,21 @@ export default function DashboardPage() {
     const [agents, setAgents] = useState<Agent[]>([]);
     const [apps, setApps] = useState<App[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
+    const [_isError, setIsError] = useState(false);
+    
+        const router = useRouter();
+    
+        useEffect(() => {
+            if (!session?.user) {
+                router.push("/login");
+            }
+        }, [session, router]);
 
     // 2. Data Fetching Effect (Unchanged)
     useEffect(() => {
         const fetchData = async () => {
-            if (status === "loading") return;
-            if (status === "unauthenticated") {
-                setIsLoading(false);
-                return;
-            }
+            if (!status) return;
+            
             try {
                 const [assetsResult, agentsResult, appsResult] =
                     await Promise.all([
@@ -213,7 +219,7 @@ export default function DashboardPage() {
                                         key={asset.id}
                                         className='flex items-center gap-4 p-2 -m-2 rounded-lg hover:bg-zinc-800 transition-colors'
                                     >
-                                        <div className='relative h-10 w-10 flex-shrink-0'>
+                                        <div className='relative h-10 w-10 shrink-0'>
                                             {asset.fileType?.split("/")[0] ===
                                                 "image" && asset.fileUrl ? (
                                                 <Image
@@ -239,7 +245,7 @@ export default function DashboardPage() {
                                                     )}`}
                                             </p>
                                         </div>
-                                        <ArrowUpRight className='h-4 w-4 text-zinc-500 flex-shrink-0' />
+                                        <ArrowUpRight className='h-4 w-4 text-zinc-500 shrink-0' />
                                     </Link>
                                 ))}
                             </div>

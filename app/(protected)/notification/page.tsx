@@ -9,20 +9,17 @@ import { Bell } from "lucide-react";
 
 export default function NotificationsPage() {
     // 1. Get session data and router
-    const { data: session, status } = useSession();
+    const { data: session, isPending: status } = useSession();
     const router = useRouter();
 
-    // 2. Handle redirection based on auth status
     useEffect(() => {
-        // If the session status is 'unauthenticated' and we're done loading, redirect.
-        if (status === 'unauthenticated' && !session?.user) {
-            // Use replace to prevent the user from hitting the notifications page via the back button
-            router.replace("/login"); 
+        if (!session?.user) {
+            router.push("/login");
         }
-    }, [status, session, router]);
+    }, [session, router]);
 
     // 3. Handle loading state
-    if (status === 'loading') {
+    if (status) {
         return (
             <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
                 <Bell className="w-6 h-6 animate-spin text-zinc-400 mr-2" />

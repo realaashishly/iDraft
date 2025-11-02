@@ -6,11 +6,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Copy, Paperclip } from "lucide-react";
-// Import the ChatMessageProps from your parent component file
 import { type Agent } from "@/action/agentActions";
 import { MODELS } from "@/constant/models";
-import { ChatMessageProps } from "./AIChatPage"; // <-- Adjust this path as needed
-import { cn } from "@/lib/utils"; // <-- Import cn for utility
+import { ChatMessageProps } from "./AIChatPage"; 
+import { cn } from "@/lib/utils";
 import remarkGfm from 'remark-gfm';
 // ---
 
@@ -70,7 +69,7 @@ export default function ChatMessage({
         >
             {/* Icon/Avatar */}
             <div
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
+                className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden ${
                     isUser ? "order-2" : "order-1"
                 }`}
             >
@@ -116,7 +115,7 @@ export default function ChatMessage({
                     )}
 
                     {message.text && (
-                        <div className='prose prose-sm prose-invert break-words prose-p:my-2 prose-leading-relaxed'>
+                        <div className='prose prose-sm prose-invert wrap-break-word prose-p:my-2 prose-leading-relaxed'>
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
                         </div>
                     )}
@@ -132,8 +131,6 @@ export default function ChatMessage({
                             <Paperclip className='h-3 w-3' /> {message.fileName}
                         </div>
                     )}
-
-                    {/* ACTIONS ROW MOVED OUTSIDE THIS DIV */}
                 </div>
 
                 {/* --- Actions and Timing Row (NOW OUTSIDE) --- */}

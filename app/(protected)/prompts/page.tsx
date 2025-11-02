@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     getAgentsAction,
@@ -35,7 +35,6 @@ import {
 } from "@/components/ui/alert-dialog";
 // ---
 import {
-    PlusCircle,
     Search,
     SlidersHorizontal,
     Edit,

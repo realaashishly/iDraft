@@ -4,7 +4,6 @@
 import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { clientPromise } from "@/lib/db";
-import { auth } from "@/lib/auth";
 
 // --- Define the expected input data structure ---
 // Note: This expects URLs for images/files, assuming they are uploaded separately first.
@@ -170,7 +169,7 @@ export async function getAgentByIdAction(
 
 export async function updateAgentAction(
     agentId: string,
-    payload: Partial<CreateAgentPayload> // Use Partial to allow updating only some fields
+    payload: Partial<CreateAgentPayload> // Use Partial to allow updating only some fields
 ): Promise<{ success: true; data: Agent } | { success: false; error: string }> {
     
 

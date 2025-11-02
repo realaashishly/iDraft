@@ -33,31 +33,6 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         { name: "Apps", icon: AppWindow, href: "/apps" },
     ];
 
-    // --- REMOVED CHAT HISTORY STATE, EFFECT, AND PROCESSING ---
-    // const [chatHistory, setChatHistory] = useState<ChatListItem[]>([]);
-    // const [isLoadingChats, setIsLoadingChats] = useState(true);
-
-    // useEffect(() => {
-    //     const fetchChats = async () => {
-    //         setIsLoadingChats(true);
-    //         const chats = await getChatsListAction();
-    //         setChatHistory(chats);
-    //         setIsLoadingChats(false);
-    //     };
-    //     fetchChats();
-    // }, []);
-
-    // const chatHistoryItems = chatHistory.map((chat) => ({
-    //     name: chat.title,
-    //     icon: MessageSquare,
-    //     href: `/agents/${chat.agentid}`,
-    // }));
-    
-    // const chatItemsWithNew = [
-    //     ...chatHistoryItems,
-    // ];
-    // -----------------------------------------------------------
-
 
     return (
         <aside
@@ -101,33 +76,6 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                     isCollapsed={isCollapsed}
                     pathname={pathname}
                 />
-
-                {/* Separator - Removed the separator that was before Chat History */}
-                {/* <div className="w-full border-t border-gray-200 dark:border-zinc-700" /> */}
-
-                {/* --- REMOVED CHAT HISTORY SECTION RENDERING --- */}
-                {/* <h2
-                    className={`mb-3 text-xs font-semibold uppercase text-gray-500 transition-opacity duration-300 ease-in-out dark:text-zinc-400 ${
-                        isCollapsed ? "opacity-0" : "opacity-100"
-                    }`}
-                >
-                    Chat History
-                </h2>
-                
-                {isLoadingChats ? (
-                    <div className="flex h-10 items-center justify-center">
-                        <Loader2 size={20} className="animate-spin text-zinc-500" />
-                    </div>
-                ) : (
-                    <SidebarSection
-                        title="" 
-                        items={chatItemsWithNew}
-                        isCollapsed={isCollapsed}
-                        pathname={pathname}
-                    />
-                )} 
-                */}
-                {/* ----------------------------------------------- */}
             </nav>
 
             {/* Sidebar Footer */}
@@ -199,7 +147,7 @@ function SidebarSection({ title, items, isCollapsed, pathname }: SidebarSectionP
                                 ${isCollapsed ? "justify-center" : "gap-3"}`} // Center icon when collapsed
                             >
                                 {/* Icon */}
-                                <item.icon size={20} className="flex-shrink-0" />
+                                <item.icon size={20} className="shrink-0" />
 
                                 {/* Item Name - Hidden when collapsed */}
                                 <span

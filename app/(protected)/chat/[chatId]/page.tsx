@@ -35,8 +35,7 @@ export default async function ChatPage({ params }: ChatRouteParams) {
     // 4. Render the client interface, passing the Chat ID as the initial ID
     return (
         <AIChatInterface 
-            agent={agentResult.data} 
-            initialChatId={chatId} // Pass the correct Chat ID
+            agent={agentResult.data}
         />
     );
 }

@@ -21,19 +21,16 @@ export default function SignupPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await signUp.email({ // <-- 3. Store the result
+      const result = await signUp.email({
         email,
         password,
         name,
-        // callbackURL might still be useful for backend processes, keep it if needed
         callbackURL: "/dashboard", 
       });
 
       // 4. Check if there was NO error
       if (!result?.error) {
-        // --- SUCCESS: Manually redirect ---
         router.push("/dashboard"); 
-        // Optional: you might want to wait a tiny bit or show a success message before redirecting
       } else {
         // --- ERROR: Set the error message ---
         setError(result.error.message || "An error occurred during signup.");
@@ -41,9 +38,6 @@ export default function SignupPage() {
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
-      // Only set submitting to false if there was an error,
-      // otherwise, the redirect will happen.
-      // Alternatively, always set it, the redirect should interrupt rendering.
        setIsSubmitting(false); 
     }
   };
@@ -69,7 +63,7 @@ export default function SignupPage() {
         <div className="bg-card/50 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl shadow-black/30 md:grid md:grid-cols-2">
           {/* ... Left Side Info ... */}
            {/* CORRECTED GRADIENT CLASS HERE */}
-           <div className="hidden md:flex flex-col justify-center p-12 bg-gradient-to-br from-gray-900 to-black">
+           <div className="hidden md:flex flex-col justify-center p-12 bg-linear-to-br from-gray-900 to-black">
              <div className="flex flex-col items-center text-center">
                <h1 className="font-bold text-4xl text-foreground">iDraft</h1>
                <p className="mt-4 text-lg text-muted-foreground">

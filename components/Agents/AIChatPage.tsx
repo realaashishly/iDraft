@@ -239,7 +239,6 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 // User has their own key. Do NOT decrement messages.
                 console.log("Using user's API key.");
                 result = await generateAiContentByUserAPI(
-                    agent.id,
                     trimmedInput,
                     agent.systemInstructions,
                     userMessage.fileName ? fileToSend : null
@@ -248,7 +247,6 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 // User does NOT have a key. Use the system key and plan to decrement.
                 console.log("Using system API key.");
                 result = await generateAiContent(
-                    agent.id,
                     trimmedInput,
                     agent.systemInstructions,
                     userMessage.fileName ? fileToSend : null
@@ -678,7 +676,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 {isSending && (
                     <div className='flex justify-start gap-3'>
                         <div
-                            className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden`}
+                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden`}
                         >
                             <Image
                                 src={
@@ -701,7 +699,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
             </div>
 
             {/* Input Area Container */}
-            <div className='w-full px-4 pb-4 pt-2 flex-shrink-0 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-zinc-950/0'>
+            <div className='w-full px-4 pb-4 pt-2 shrink-0 bg-linear-to-t from-zinc-950 via-zinc-950/95 to-zinc-950/0'>
                 <div className='max-w-2xl mx-auto'>
                     <div className='group relative'>
                         <form onSubmit={handleSendMessage} className='relative'>
@@ -741,11 +739,11 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                 {attachedFile && (
                                     <div className='mb-2 mt-1 mx-3 p-1.5 px-2 border border-dashed border-zinc-600 rounded-md flex items-center justify-between bg-zinc-700/50 text-xs shadow-sm'>
                                         <div className='flex items-center gap-2 overflow-hidden'>
-                                            <Paperclip className='h-3 w-3 flex-shrink-0 text-zinc-400' />
+                                            <Paperclip className='h-3 w-3 shrink-0 text-zinc-400' />
                                             <span className='truncate text-zinc-300'>
                                                 {attachedFile.name}
                                             </span>
-                                            <span className='text-zinc-500 text-xs flex-shrink-0'>
+                                            <span className='text-zinc-500 text-xs shrink-0'>
                                                 (
                                                 {(
                                                     attachedFile.size / 1024
@@ -774,7 +772,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                             type='button'
                                             variant='ghost'
                                             size='icon'
-                                            className='rounded-full text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 h-8 w-8 flex-shrink-0 transition-colors'
+                                            className='rounded-full text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 h-8 w-8 shrink-0 transition-colors'
                                             onClick={() =>
                                                 setIsSettingsModalOpen(true)
                                             }
@@ -790,7 +788,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                             type='button'
                                             variant='ghost'
                                             size='icon'
-                                            className='rounded-full text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 h-8 w-8 flex-shrink-0 transition-colors'
+                                            className='rounded-full text-zinc-400 hover:bg-zinc-700 hover:text-zinc-100 h-8 w-8 shrink-0 transition-colors'
                                             onClick={handleFileAttachClick}
                                             disabled={
                                                 !canSendMessage ||
@@ -805,16 +803,16 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                                             <DropdownMenuTrigger asChild>
                                                 <Button
                                                     variant='ghost'
-                                                    className='flex-shrink-0 flex items-center gap-1 text-xs font-medium text-zinc-400 p-1 h-8 focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-zinc-700/50 hover:text-zinc-100 rounded-md'
+                                                    className='shrink-0 flex items-center gap-1 text-xs font-medium text-zinc-400 p-1 h-8 focus-visible:ring-0 focus-visible:ring-offset-0 hover:bg-zinc-700/50 hover:text-zinc-100 rounded-md'
                                                     disabled={
                                                         isSending ||
                                                         isLoadingHistory
                                                     }
                                                 >
-                                                    <span className='truncate max-w-[80px]'>
+                                                    <span className='truncate max-w-20'>
                                                         {selectedModelName}
                                                     </span>
-                                                    <ChevronDown className='h-3 w-3 flex-shrink-0' />
+                                                    <ChevronDown className='h-3 w-3 shrink-0' />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent

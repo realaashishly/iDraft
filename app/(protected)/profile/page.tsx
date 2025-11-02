@@ -11,27 +11,14 @@ import {
     Star,
     Trello,
     Zap,
-    Download,
-    Package,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
-// --- REQUIRED IMPORTS ---
 import { useActivity } from "@/contexts/ActivityContext";
-import { getAssets } from "@/action/assetAction"; // To fetch asset count
-import { type Asset } from "@/lib/types"; // Import Asset type
-// ------------------------
+import { getAssets } from "@/action/assetAction";
+import { type Asset } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 /**
  * Calculates productivity based on completed and pending tasks.
@@ -55,7 +42,7 @@ const calculateStreak = (timeSpent: number) => {
 const LOCAL_STORAGE_KEY = "dashboardUserTodos";
 
 export default function Profile() {
-    const { data: session, status } = useSession();
+    const { data: session, isPending: status } = useSession();
     const { timeSpent } = useActivity(); // Get session activity time
 
     // --- STATE ---
@@ -66,15 +53,19 @@ export default function Profile() {
     // Stats fetched from Local Storage
     const [completedTodosCount, setCompletedTodosCount] = useState(0);
     const [pendingTodosCount, setPendingTodosCount] = useState(0);
-    // -----------------
 
     const user = session?.user;
 
-    // --- DATA FETCHING EFFECTS ---
+    const router = useRouter();
+
 
     // Effect 1: Fetch Total Asset Count (Server Action)
     const fetchAssetCount = useCallback(async () => {
-        if (status !== "authenticated") return;
+        if (!user) {
+            
+            router.push("/login");
+        
+        };
         try {
             // Use getAssets to fetch the actual list
             const assets: Asset[] = await getAssets();
@@ -117,7 +108,7 @@ export default function Profile() {
 
     // Effect 3: Trigger DB fetch when session is ready
     useEffect(() => {
-        if (status === "authenticated") {
+        if (user) {
             fetchAssetCount();
         }
     }, [status, fetchAssetCount]);
@@ -294,18 +285,10 @@ export default function Profile() {
     ];
 
     // 3. Handle Auth States
-    if (status === "loading") {
+    if (status) {
         return (
-            <div className='min-h-screen bg-zinc-950 text-white flex items-center justify-center'>
+            <div className='min-h-[88vh] bg-zinc-950 text-white flex items-center justify-center'>
                 Loading Profile...
-            </div>
-        );
-    }
-
-    if (status === "unauthenticated" || !session?.user) {
-        return (
-            <div className='min-h-screen bg-zinc-950 text-white flex items-center justify-center'>
-                You must be logged in to view this page.
             </div>
         );
     }
@@ -323,10 +306,10 @@ export default function Profile() {
                 {/* Content Area */}
                 <div className='relative px-6 pb-6'>
                     {/* Overlapping Avatar */}
-                    <div className='relative -mt-12 h-24 w-24 rounded-lg border-4 border-zinc-900 bg-gradient-to-br from-blue-600 to-blue-500 shadow-lg'>
-                        {session.user.image ? (
+                    <div className='relative -mt-12 h-24 w-24 rounded-lg border-4 border-zinc-900 bg-linear-to-br from-blue-600 to-blue-500 shadow-lg'>
+                        {session?.user.image ? (
                             <Image
-                                src={session.user.image}
+                                src={session?.user.image}
                                 alt='Avatar'
                                 width={96}
                                 height={96}
@@ -364,11 +347,11 @@ export default function Profile() {
                         </h3>
                         <div className='mt-4 flex flex-col space-y-3'>
                             <div className='flex items-center text-sm text-zinc-300'>
-                                <Mail className='mr-2 h-4 w-4 flex-shrink-0 text-zinc-500' />
+                                <Mail className='mr-2 h-4 w-4 shrink-0 text-zinc-500' />
                                 <span>{user?.email}</span>
                             </div>
                             <div className='flex items-center text-sm text-zinc-300'>
-                                <Calendar className='mr-2 h-4 w-4 flex-shrink-0 text-zinc-500' />
+                                <Calendar className='mr-2 h-4 w-4 shrink-0 text-zinc-500' />
                                 <span>
                                     Joined{" "}
                                     {user?.createdAt
@@ -391,7 +374,7 @@ export default function Profile() {
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
-                            <div className='flex-shrink-0 rounded-md bg-green-900 p-3'>
+                            <div className='shrink-0 rounded-md bg-green-900 p-3'>
                                 <CheckCircle className='h-6 w-6 text-green-400' />
                             </div>
                             <div className='ml-5 w-0 flex-1'>
@@ -414,7 +397,7 @@ export default function Profile() {
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
-                            <div className='flex-shrink-0 rounded-md bg-blue-900 p-3'>
+                            <div className='shrink-0 rounded-md bg-blue-900 p-3'>
                                 <Zap className='h-6 w-6 text-blue-400' />
                             </div>
                             <div className='ml-5 w-0 flex-1'>
@@ -437,7 +420,7 @@ export default function Profile() {
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
-                            <div className='flex-shrink-0 rounded-md bg-yellow-900 p-3'>
+                            <div className='shrink-0 rounded-md bg-yellow-900 p-3'>
                                 <Star className='h-6 w-6 text-yellow-400' />
                             </div>
                             <div className='ml-5 w-0 flex-1'>
@@ -460,7 +443,7 @@ export default function Profile() {
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
-                            <div className='flex-shrink-0 rounded-md bg-red-900 p-3'>
+                            <div className='shrink-0 rounded-md bg-red-900 p-3'>
                                 <Clock className='h-6 w-6 text-red-400' />
                             </div>
                             <div className='ml-5 w-0 flex-1'>

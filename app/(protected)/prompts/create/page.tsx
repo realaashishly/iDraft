@@ -303,7 +303,7 @@ export default function CreateAgentPage() {
                                 {files.map(file => (
                                     <div key={file.name} className="text-sm p-1.5 px-3 border border-border rounded-md flex items-center justify-between bg-background">
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                            <FileIcon className="h-4 w-4 text-muted-foreground flex-shrink-0"/>
+                                            <FileIcon className="h-4 w-4 text-muted-foreground shrink-0"/>
                                             <span className="truncate">{file.name}</span>
                                         </div>
                                         <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => !(isProcessing || isUploading) && removeFile(file.name)} disabled={isProcessing || isUploading}>

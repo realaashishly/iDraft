@@ -63,7 +63,7 @@ export default function LoginPage() {
           <div className='w-full max-w-4xl mx-auto'>
               <div className='bg-card/50 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl shadow-black/30 md:grid md:grid-cols-2'>
                   {/* Left Side Info */}
-                  <div className='hidden md:flex flex-col justify-center p-12 bg-gradient-to-br from-gray-900 to-black'>
+                  <div className='hidden md:flex flex-col justify-center p-12 bg-linear-to-br from-gray-900 to-black'>
                       <div className='flex flex-col items-center text-center'>
                           <h1 className='font-bold text-4xl text-foreground'>
                               iDraft

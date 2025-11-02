@@ -30,7 +30,7 @@ export default function ActivityTracker() {
     <div className="flex flex-col space-y-4">
       {/* Time Spent */}
       <div className="flex items-center">
-        <Clock className="h-5 w-5 text-indigo-400 mr-3 flex-shrink-0" />
+        <Clock className="h-5 w-5 text-indigo-400 mr-3 shrink-0" />
         <div>
           <div 
             className="font-mono text-xl font-bold text-zinc-100"
@@ -44,7 +44,7 @@ export default function ActivityTracker() {
 
       {/* Click Count */}
       <div className="flex items-center">
-        <MousePointerClick className="h-5 w-5 text-indigo-400 mr-3 flex-shrink-0" />
+        <MousePointerClick className="h-5 w-5 text-indigo-400 mr-3 shrink-0" />
         <div>
           <div className="font-mono text-xl font-bold text-zinc-100">
             {clickCount}
@@ -55,7 +55,7 @@ export default function ActivityTracker() {
 
       {/* Key Press Count */}
       <div className="flex items-center">
-        <Keyboard className="h-5 w-5 text-indigo-400 mr-3 flex-shrink-0" />
+        <Keyboard className="h-5 w-5 text-indigo-400 mr-3 shrink-0" />
         <div>
           <div className="font-mono text-xl font-bold text-zinc-100">
             {keyPressCount}

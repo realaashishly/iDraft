@@ -10,10 +10,9 @@ import { AddAppModal } from "@/components/AddAppModal";
 import {
   Card,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// --- MODIFICATION: Import Alert Dialog components ---
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -206,7 +205,7 @@ export default function Page() {
                           alt={`${app.appName} logo`}
                           width={56}
                           height={56}
-                          className='rounded-md border object-cover flex-shrink-0 w-16 h-16'
+                          className='rounded-md border object-cover shrink-0 w-16 h-16'
                         />
                         <div className='flex flex-col justify-center min-w-0 flex-1'>
                           <CardTitle className='text-base font-semibold truncate'>
@@ -218,7 +217,7 @@ export default function Page() {
                           </CardDescription>
                         </div>
                       </div>
-                      <ArrowUpRight className='h-5 w-5 text-muted-foreground flex-shrink-0 ml-4' />
+                      <ArrowUpRight className='h-5 w-5 text-muted-foreground shrink-0 ml-4' />
                     </div>
                   </Link>
                 </Card>
