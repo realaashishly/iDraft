@@ -11,8 +11,10 @@ import {
     Star,
     Trello,
     Zap,
+    Download,
+    Package,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -24,35 +26,122 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import { useSession } from "@/lib/auth-client"; // <-- Your custom hook
+import { useSession } from "@/lib/auth-client";
+// --- REQUIRED IMPORTS ---
+import { useActivity } from "@/contexts/ActivityContext";
+import { getAssets } from "@/action/assetAction"; // To fetch asset count
+import { type Asset } from "@/lib/types"; // Import Asset type
+// ------------------------
 
-// Define a type for your local user state, merging static info with session data
-type UserState = {
-    firstName: string;
-    lastName: string;
-    initials: string;
-    email: string;
-    role: string;
-    team: string;
-    joinDate: string;
-    avatar: File | null;
+/**
+ * Calculates productivity based on completed and pending tasks.
+ */
+const calculateProductivity = (completed: number, pending: number) => {
+    const total = completed + pending;
+    // If there are no tasks, productivity is 0%
+    if (total === 0) return 0;
+    // Calculation: (Completed / Total) * 100
+    return Math.round((completed / total) * 100);
 };
 
+/**
+ * Calculates a "streak" based on minutes of session activity.
+ */
+const calculateStreak = (timeSpent: number) => {
+    return Math.floor(timeSpent / 60); // Returns total minutes
+};
+
+// The key used by the TodoList widget
+const LOCAL_STORAGE_KEY = "dashboardUserTodos";
+
 export default function Profile() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
+    const { timeSpent } = useActivity(); // Get session activity time
+
+    // --- STATE ---
+    // Stats fetched from DB (or mocked)
+    const [totalAssetsCount, setTotalAssetsCount] = useState(0);
+    const [totalDownloadsCount] = useState(32); // Mocked value
+
+    // Stats fetched from Local Storage
+    const [completedTodosCount, setCompletedTodosCount] = useState(0);
+    const [pendingTodosCount, setPendingTodosCount] = useState(0);
+    // -----------------
 
     const user = session?.user;
 
-    // Stats (These remain static for now as they're mock data)
-    const stats = {
-        completedTasks: 142,
-        pendingTasks: 8,
-        productivity: 92,
-        streak: 18,
+    // --- DATA FETCHING EFFECTS ---
+
+    // Effect 1: Fetch Total Asset Count (Server Action)
+    const fetchAssetCount = useCallback(async () => {
+        if (status !== "authenticated") return;
+        try {
+            // Use getAssets to fetch the actual list
+            const assets: Asset[] = await getAssets();
+            setTotalAssetsCount(assets.length);
+        } catch (error) {
+            console.error("Failed to load assets count:", error);
+            setTotalAssetsCount(0); // Default to 0 on error
+        }
+    }, [status]); // Depends on session status
+
+    // Effect 2: Load Todo Stats (Local Storage)
+    useEffect(() => {
+        // This runs only on the client side
+        if (typeof window !== "undefined") {
+            const storedTodos = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (storedTodos) {
+                try {
+                    const todos = JSON.parse(storedTodos);
+                    const completed = todos.filter(
+                        (t: any) => t.isCompleted
+                    ).length;
+                    const pending = todos.filter(
+                        (t: any) => !t.isCompleted
+                    ).length;
+
+                    setCompletedTodosCount(completed);
+                    setPendingTodosCount(pending);
+                } catch (e) {
+                    console.error(
+                        "Failed to parse todos from localStorage:",
+                        e
+                    );
+                    // Leave counts as 0 if parsing fails
+                    setCompletedTodosCount(0);
+                    setPendingTodosCount(0);
+                }
+            }
+        }
+    }, []); // Runs once on mount
+
+    // Effect 3: Trigger DB fetch when session is ready
+    useEffect(() => {
+        if (status === "authenticated") {
+            fetchAssetCount();
+        }
+    }, [status, fetchAssetCount]);
+
+    // --- DERIVED STATS FOR JSX ---
+    const currentStats = {
+        // Core Todo Stats (from Local Storage)
+        completedTasks: completedTodosCount,
+        pendingTasks: pendingTodosCount,
+
+        // Calculated Stats (uses local storage counts for inputs)
+        productivity: calculateProductivity(
+            completedTodosCount,
+            pendingTodosCount
+        ),
+
+        // Activity & Mock/DB Stats
+        streak: calculateStreak(timeSpent),
+        totalDownloads: totalDownloadsCount, // Mocked
+        totalAssets: totalAssetsCount, // From DB
     };
 
     // =========================================================================
-    // REMAINING LOGIC (mostly unchanged from original)
+    // REMAINING LOGIC (Time Left, Contributions, etc. - Unchanged)
     // =========================================================================
 
     // Time Left state and calculation (unchanged)
@@ -61,7 +150,6 @@ export default function Profile() {
     useEffect(() => {
         const updateTimeLeft = () => {
             const now = new Date();
-            // ... (Time calculation logic unchanged)
             const startOfYear = new Date(now.getFullYear(), 0, 1);
             const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
             const yearProgress =
@@ -92,7 +180,6 @@ export default function Profile() {
 
     // Connected platforms (unchanged)
     const connectedPlatforms = [
-        // ... (platform array unchanged)
         {
             name: "GitHub",
             icon: <Github className='h-5 w-5 text-zinc-400' />,
@@ -124,8 +211,6 @@ export default function Profile() {
     type Contribution = { date: Date; count: number | null };
     const [contributions, setContributions] = useState<Contribution[]>([]);
     const [currentYear] = useState(2025);
-
-    // ... (formatTooltipDate, generateContributions, useEffect to init contributions, handleInputChange, handleAvatarChange, handleSubmit, calculateRemainingWeeks, calculateRemainingDays, months array unchanged)
 
     // Format date for tooltip
     const formatTooltipDate = (date: Date) => {
@@ -217,7 +302,6 @@ export default function Profile() {
         );
     }
 
-    // NOTE: Depending on your auth implementation, you might redirect here.
     if (status === "unauthenticated" || !session?.user) {
         return (
             <div className='min-h-screen bg-zinc-950 text-white flex items-center justify-center'>
@@ -227,7 +311,7 @@ export default function Profile() {
     }
 
     // =========================================================================
-    // JSX RENDER (Now using 'user' state derived from session)
+    // JSX RENDER (Now using 'currentStats' derived from local data)
     // =========================================================================
     return (
         <div className='min-h-screen bg-zinc-950 text-white'>
@@ -301,9 +385,9 @@ export default function Profile() {
                     </div>
                 </div>
             </div>
-            {/* Stats Cards (unchanged) */}
+            {/* Stats Cards (UPDATED) */}
             <div className='mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
-                {/* ... Stats Card JSX ... */}
+                {/* 1. Completed Tasks (from Local Storage) */}
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
@@ -317,7 +401,7 @@ export default function Profile() {
                                     </dt>
                                     <dd className='flex items-baseline'>
                                         <div className='text-2xl font-semibold text-white'>
-                                            {stats.completedTasks}
+                                            {currentStats.completedTasks}
                                         </div>
                                     </dd>
                                 </dl>
@@ -325,7 +409,8 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
-                {/* ... (Other stat cards follow the same pattern) ... */}
+
+                {/* 2. Current Streak (ActivityContext) */}
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
@@ -335,11 +420,11 @@ export default function Profile() {
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
                                     <dt className='truncate text-sm font-medium text-zinc-400'>
-                                        Current Streak
+                                        Session Streak
                                     </dt>
                                     <dd className='flex items-baseline'>
                                         <div className='text-2xl font-semibold text-white'>
-                                            {stats.streak} days
+                                            {currentStats.streak} min
                                         </div>
                                     </dd>
                                 </dl>
@@ -347,6 +432,8 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
+
+                {/* 3. Productivity (Calculated from Local Storage) */}
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
@@ -356,11 +443,11 @@ export default function Profile() {
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
                                     <dt className='truncate text-sm font-medium text-zinc-400'>
-                                        Productivity
+                                        Productivity Rate
                                     </dt>
                                     <dd className='flex items-baseline'>
                                         <div className='text-2xl font-semibold text-white'>
-                                            {stats.productivity}%
+                                            {currentStats.productivity}%
                                         </div>
                                     </dd>
                                 </dl>
@@ -368,6 +455,8 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
+
+                {/* 4. Pending Todos (Local Storage) */}
                 <div className='overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                     <div className='p-5'>
                         <div className='flex items-center'>
@@ -377,11 +466,11 @@ export default function Profile() {
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
                                     <dt className='truncate text-sm font-medium text-zinc-400'>
-                                        Pending Tasks
+                                        Pending Todos
                                     </dt>
                                     <dd className='flex items-baseline'>
                                         <div className='text-2xl font-semibold text-white'>
-                                            {stats.pendingTasks}
+                                            {currentStats.pendingTasks}
                                         </div>
                                     </dd>
                                 </dl>
@@ -390,6 +479,7 @@ export default function Profile() {
                     </div>
                 </div>
             </div>
+
             {/* Contribution Graph (unchanged) */}
             <div className='mb-6 overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 shadow'>
                 <div className='px-6 py-5 text-center'>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useSession, updateUser, signOut } from "@/lib/auth-client";
+import { useSession, signOut } from "@/lib/auth-client";
 import {
     updateUserGeminiApiKeyAction,
     updateUserProfileAction,
@@ -49,22 +49,18 @@ import {
 // --- Lucide Icons ---
 import {
     Loader2,
-    Key,
-    Trash2,
-    User,
-    Palette,
-    ShieldAlert,
-    Bell,
     Sun,
     Moon,
     Laptop,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // --- Page Level Types & Schemas ---
 
 const profileFormSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
     email: z.string().email("Please enter a valid email.").describe("Email"),
+    profession: z.string().optional(),
 });
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
@@ -86,37 +82,21 @@ const getInitials = (name: string) => {
 
 // --- Main Settings Page Component ---
 export default function SettingsPage() {
-    const { status } = useSession(); // Use session to check auth status
+    const { data: session, isPending: status } = useSession();
+
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!session?.user) {
+            router.push("/login");
+        }
+    }, [session, router]);
 
     // Handle global loading state for the session
-    if (status === "loading") {
+    if (status) {
         return (
             <div className='flex min-h-[88vh] items-center justify-center'>
                 <Loader2 className='h-10 w-10 animate-spin text-muted-foreground' />
-            </div>
-        );
-    }
-
-    // Handle unauthenticated state
-    if (status === "unauthenticated") {
-        return (
-            <div className='flex min-h-[88vh] items-center justify-center p-4 md:p-8'>
-                <Card className='bg-card/50 border-white/10 shadow-lg w-full max-w-md'>
-                    <CardHeader>
-                        <CardTitle>Access Denied</CardTitle>
-                        <CardDescription>
-                            You must be logged in to view this page.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardFooter>
-                        <Button
-                            onClick={() => signOut({ callbackURL: "/login" })}
-                            className='w-full'
-                        >
-                            Go to Login
-                        </Button>
-                    </CardFooter>
-                </Card>
             </div>
         );
     }
@@ -147,7 +127,7 @@ export default function SettingsPage() {
 // --- SECTION 1: PROFILE SETTINGS COMPONENT ---
 // =========================================================================
 export function ProfileSettings() {
-    const { data: session, status, update: updateSession } = useSession();
+    const { data: session } = useSession();
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -184,7 +164,7 @@ export function ProfileSettings() {
 
             if (!result.success) throw new Error(result.message);
 
-            await updateSession(); // Refresh the session
+           
             setMessage({
                 type: "success",
                 text: "Profile updated successfully!",
@@ -207,7 +187,7 @@ export function ProfileSettings() {
             });
             if (!result.success) throw new Error(result.message);
 
-            await updateSession();
+            
             setMessage({
                 type: "success",
                 text: "Avatar updated successfully!",
@@ -377,7 +357,7 @@ export function ProfileSettings() {
 // --- SECTION 2: API KEYS SETTINGS COMPONENT ---
 // =========================================================================
 function ApiKeysSettings() {
-    const { data: session, update: updateSession } = useSession();
+    const { data: session } = useSession();
     const [isSaving, setIsSaving] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
 
@@ -406,7 +386,7 @@ function ApiKeysSettings() {
             const result = await updateUserGeminiApiKeyAction(keyToSave);
             if (!result.success) throw new Error(result.message);
 
-            await updateSession(); // Refresh session
+            
             setMessage({ type: "success", text: result.message });
             if (!keyToSave) {
                 form.reset({ geminiApiKey: "" }); // Clear form if key was removed
@@ -721,9 +701,7 @@ function AccountSettings() {
                     <Button
                         variant='outline'
                         onClick={() =>
-                            signOut({
-                                callbackURL: "/login",
-                            })
+                            signOut()
                         }
                     >
                         Sign Out

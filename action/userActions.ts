@@ -208,9 +208,13 @@ export async function getUserGeminiApiKeyAction() {
 
 export async function updateUserProfileAction(data: UpdateUserData) {
     // --- 1. Get Session ---
+    console.log('Executing getSession');
+    
     const session = await auth.api.getSession({
         headers: await headers(),
     });
+
+    console.log('Executed getSession');
 
     if (!session?.user?.id) {
         return {

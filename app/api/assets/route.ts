@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { client } from "@/lib/db";
 import Asset from "@/models/Asset";
+import { clientPromise } from "@/lib/db";
 
 export async function GET() {
-  await client.connect();
+  await clientPromise;
   const assets = await Asset.find({}).sort({ createdAt: -1 });
   return NextResponse.json(assets);
 }
