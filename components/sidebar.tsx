@@ -8,14 +8,18 @@ import {
   Settings,
   Users,
   X,
-  // MessageSquare, // Removed chat icon
-  // Loader2, // Removed loader icon
+  // === ADDED ICONS ===
+  Music, // For Spotify
+  Mail, // For Google Mail
+  Slack,
+  Github,
+  // Discord,
+  // ===================
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type React from "react"; // Removed useState and useEffect
-
-// Removed import for getChatHistoryAction, getChatsListAction, and ChatListItem type
+import type React from "react";
+import { FaDiscord } from "react-icons/fa";
 
 // Define component props
 interface SidebarProps {
@@ -31,12 +35,25 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
     { name: "Dashboard", icon: Home, href: "/dashboard" },
     { name: "Prompts", icon: Users, href: "/prompts" },
     { name: "Assets", icon: Package, href: "/assets" },
-    { name: "Apps", icon: AppWindow, href: "/apps" },
+    { name: "Apps", icon: AppWindow, href: "/apps" }, // === REMOVED ===
   ];
+
+  // === ADDED ===
+  // App navigation items
+  const appItems = [
+    { name: "Spotify", icon: Music, href: "/apps/spotify" },
+    { name: "Google Mail", icon: Mail, href: "/apps/gmail" },
+    { name: "Slack", icon: Slack, href: "/apps/slack" },
+    { name: "Github", icon: Github, href: "/apps/github" },
+    { name: "Discord", icon: FaDiscord, href: "/apps/discord" },
+  ];
+  // =============
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-50 h-screen border-gray-200 border-r bg-white transition-all duration-300 ease-in-out dark:border-zinc-800 dark:bg-zinc-900 ${isCollapsed ? "w-20" : "w-64"}
+      className={`fixed top-0 left-0 z-50 h-screen border-gray-200 border-r bg-white transition-all duration-300 ease-in-out dark:border-zinc-800 dark:bg-zinc-900 ${
+        isCollapsed ? "w-20" : "w-64"
+      }
             `}
     >
       {/* Sidebar Header */}
@@ -74,6 +91,16 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
           pathname={pathname}
           title="Main"
         />
+
+        {/* === ADDED === */}
+        {/* Apps Navigation */}
+        <SidebarSection
+          isCollapsed={isCollapsed}
+          items={appItems}
+          pathname={pathname}
+          title="Apps"
+        />
+        {/* ============= */}
       </nav>
 
       {/* Sidebar Footer */}
@@ -147,7 +174,9 @@ function SidebarSection({
                   isActive
                     ? "bg-black text-white" // Active state style
                     : "text-gray-700 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                } // Default state style ${isCollapsed ? "justify-center" : "gap-3"}`}
+                } // Default state style ${
+                  isCollapsed ? "justify-center" : "gap-3"
+                }`}
                 href={item.href} // Center icon when collapsed
               >
                 {/* Icon */}

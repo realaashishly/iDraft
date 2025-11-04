@@ -38,8 +38,11 @@ export default function SignupPage() {
       if (result?.error) {
         // Display authentication errors from the server
         setError(result.error.message || "An error occurred during signup.");
+        // === FIX 1: Reset loading state on a known error ===
+        setIsSubmitting(false);
       } else {
         // On success, navigate to the dashboard
+        // No need to reset loading state, as the component will unmount
         router.push("/dashboard");
       }
     } catch (err: unknown) {
@@ -48,6 +51,7 @@ export default function SignupPage() {
       } else {
         setError("Something went wrong. Please try again.");
       }
+      // This was already correct: reset loading state on an unexpected error
       setIsSubmitting(false);
     }
   };
@@ -57,6 +61,9 @@ export default function SignupPage() {
    */
   const handleGoogleSignIn = async () => {
     setError(null);
+    // === FIX 2: Set loading state to disable all inputs ===
+    setIsSubmitting(true);
+
     try {
       // This will initiate the redirect-based social sign-in flow
       await signIn.social({
@@ -64,12 +71,14 @@ export default function SignupPage() {
         callbackURL: "/dashboard",
       });
       // No explicit redirect needed here as the browser navigates
+      // If the flow succeeds, the page redirects and unmounts
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
         setError("Failed to sign in with Google.");
       }
+      // Reset loading state if the sign-in *initiation* fails
       setIsSubmitting(false);
     }
   };
@@ -83,7 +92,8 @@ export default function SignupPage() {
             <div className="flex flex-col items-center text-center">
               <h1 className="font-bold text-4xl text-foreground">iDraft</h1>
               <p className="mt-4 text-lg text-muted-foreground">
-                Your secure hub for proffessional work and digital assets.
+                {/* === TYPO FIX === */}
+                Your secure hub for professional work and digital assets.
               </p>
             </div>
           </div>
@@ -95,7 +105,8 @@ export default function SignupPage() {
                 Create an Account
               </h2>
               <p className="mb-4 text-muted-foreground">
-                Join iDraft to manage your proffessional work.
+                {/* === TYPO FIX === */}
+                Join iDraft to manage your professional work.
               </p>
             </div>
 
