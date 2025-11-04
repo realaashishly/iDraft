@@ -41,11 +41,11 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
   // === ADDED ===
   // App navigation items
   const appItems = [
-    { name: "Spotify", icon: Music, href: "/apps/spotify" },
-    { name: "Google Mail", icon: Mail, href: "/apps/gmail" },
-    { name: "Slack", icon: Slack, href: "/apps/slack" },
-    { name: "Github", icon: Github, href: "/apps/github" },
-    { name: "Discord", icon: FaDiscord, href: "/apps/discord" },
+    { name: "Spotify", icon: Music},
+    { name: "Google Mail", icon: Mail },
+    { name: "Slack", icon: Slack },
+    { name: "Github", icon: Github },
+    { name: "Discord", icon: FaDiscord },
   ];
   // =============
 
@@ -133,7 +133,7 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
 // Helper component for rendering sidebar sections (no changes needed here)
 interface SidebarSectionProps {
   title: string;
-  items: { name: string; icon: React.ElementType; href: string }[];
+  items: { name: string; icon: React.ElementType; href?: string }[];
   isCollapsed: boolean;
   pathname: string | null;
 }
@@ -165,7 +165,7 @@ function SidebarSection({
           // Check if the current pathname is an exact match OR if both paths start with the chat base
           const isActive =
             pathname === item.href ||
-            (item.href.startsWith(chatBasePath) && pathname === item.href);
+            (item.href?.startsWith(chatBasePath) && pathname === item.href);
 
           return (
             <li key={item.name}>
@@ -177,7 +177,7 @@ function SidebarSection({
                 } // Default state style ${
                   isCollapsed ? "justify-center" : "gap-3"
                 }`}
-                href={item.href} // Center icon when collapsed
+                href={item.href || '' } // Center icon when collapsed
               >
                 {/* Icon */}
                 <item.icon className="shrink-0" size={20} />
