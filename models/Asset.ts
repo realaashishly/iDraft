@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { type Document, Schema } from "mongoose";
 
 export interface IAsset extends Document {
   title: string;
@@ -20,4 +20,5 @@ const AssetSchema: Schema = new Schema({
   uploadedBy: { type: String, required: true },
 });
 
-export default mongoose.models.Asset || mongoose.model<IAsset>('Asset', AssetSchema);
+export default mongoose.models.Asset ||
+  mongoose.model<IAsset>("Asset", AssetSchema);

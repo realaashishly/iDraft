@@ -1,311 +1,306 @@
 "use server";
 
-import { headers } from "next/headers";
+import { ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { clientPromise } from "@/lib/db";
-import { ObjectId } from "mongodb";
+import type { UpdateUserData } from "@/type/types";
 
-interface UpdateUserData {
-    name?: string;
-    profession?: string;
-    image?: string;
-}
-
+/**
+ * Updates the Gemini API key for the currently authenticated user.
+ * @param geminiApiKey The new API key to save.
+ * @returns A promise resolving to an object with success status and a message.
+ */
 export async function updateUserGeminiApiKeyAction(geminiApiKey: string) {
-    // --- 1. Get Session ---
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-    if (!session?.user?.id) {
-        return {
-            success: false,
-            message: "Authentication required.",
-        };
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      message: "Authentication required.",
+    };
+  }
+
+  // Basic key validation
+  if (
+    !geminiApiKey ||
+    typeof geminiApiKey !== "string" ||
+    geminiApiKey.trim().length < 10
+  ) {
+    return {
+      success: false,
+      message: "Invalid API key. The key seems too short or is empty.",
+    };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("user");
+
+    const userId = new ObjectId(session.user.id);
+
+    const updateResult = await collection.findOneAndUpdate(
+      { _id: userId },
+      { $set: { geminiApiKey: geminiApiKey.trim() } },
+      { returnDocument: "after" } // Return the updated document
+    );
+
+    if (!updateResult) {
+      return {
+        success: false,
+        message: "Failed to update API key. User not found.",
+      };
     }
 
-    console.log("Session and gemini key:  ", session.user, geminiApiKey);
+    revalidatePath("/profile");
+    revalidatePath("/settings");
 
-    // --- 2. Validate Data ---
-    if (
-        !geminiApiKey ||
-        typeof geminiApiKey !== "string" ||
-        geminiApiKey.trim().length < 10
-    ) {
-        return {
-            success: false,
-            message: "Invalid API key. The key seems too short or is empty.",
-        };
-    }
-
-    // --- 3. Execute Update ---
-    try {
-        const client = await clientPromise;
-        const db = client.db(process.env.MONGODB_DB_NAME);
-        const collection = db.collection("user");
-
-        const userId = new ObjectId(session.user.id);
-
-        console.log("logging userid for mongo: ", userId);
-
-        // --- FIX ---
-        // Change this back to `findOneAndUpdate` and uncomment the arguments
-        const updateResult = await collection.findOneAndUpdate(
-            { _id: userId }, // 1. Filter
-            { $set: { geminiApiKey: geminiApiKey.trim() } }, // 2. Update document
-            { returnDocument: "after" } // 3. Options
-        );
-
-        // Your error checking logic is correct for `findOneAndUpdate`
-        if (!updateResult) {
-            console.error(
-                "Failed to update API key: Document not found or update failed."
-            );
-            return {
-                success: false,
-                message: "Failed to update API key. User not found.",
-            };
-        }
-
-        // --- 4. Revalidate and Return Success ---
-        revalidatePath("/profile");
-        revalidatePath("/settings");
-
-        return {
-            success: true,
-            message: "Gemini API key updated successfully.",
-            data: updateResult.value, // Optionally return the updated user
-        };
-    } catch (error) {
-        console.error("Failed to update Gemini API key:", error);
-        return {
-            success: false,
-            message: "A server error occurred during update.",
-        };
-    }
+    return {
+      success: true,
+      message: "Gemini API key updated successfully.",
+      data: updateResult.value,
+    };
+  } catch {
+    return {
+      success: false,
+      message: "A server error occurred during update.",
+    };
+  }
 }
 
+/**
+ * Atomically decrements the `messagesLeft` count for the authenticated user.
+ * This operation will fail if the user's message count is already 0.
+ * @returns A promise resolving to an object with success status and the updated user data.
+ */
 export async function decrementMessagesLeftAction() {
-    // --- 1. Get Session ---
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-    if (!session?.user?.id) {
-        return {
-            success: false,
-            message: "Authentication required.",
-        };
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      message: "Authentication required.",
+    };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("user");
+
+    const userId = new ObjectId(session.user.id);
+
+    // Atomically find and update the user *only if* they have messages left
+    const updateResult = await collection.findOneAndUpdate(
+      {
+        _id: userId,
+        messagesLeft: { $gt: 0 }, // Ensure user has messages to decrement
+      },
+      { $inc: { messagesLeft: -1 } }, // Atomically decrement by 1
+      { returnDocument: "after" } // Return the *new* document
+    );
+
+    // If updateResult is null, the filter failed (user not found or messagesLeft was 0)
+    if (!updateResult) {
+      return {
+        success: false,
+        message: "You are out of messages.",
+      };
     }
 
-    // --- 2. No Data Validation Needed ---
-    // We are not receiving any data from the client, so no validation here.
+    revalidatePath("/profile"); // Revalidate any page that shows the message count
 
-    // --- 3. Execute Atomic Update ---
-    try {
-        const client = await clientPromise;
-        const db = client.db(process.env.MONGODB_DB_NAME);
-        const collection = db.collection("user");
-
-        const userId = new ObjectId(session.user.id);
-
-        console.log(`Attempting to decrement message count for user ${userId}`);
-
-        // --- KEY CHANGES ---
-        // We find the user AND check if they have messages > 0
-        // If they do, we atomically decrement the count by 1.
-        const updateResult = await collection.findOneAndUpdate(
-            {
-                _id: userId,
-                messagesLeft: { $gt: 0 }, // Filter: Find user ONLY IF messages are greater than 0
-            },
-            { $inc: { messagesLeft: -1 } }, // Update: Use $inc to decrement by 1
-            { returnDocument: "after" } // Options: Return the *new* document
-        );
-
-        // --- 4. Handle Results ---
-        // If `updateResult` is null, it means the filter did not match.
-        // This happens if the user ID is wrong OR if `messagesLeft` was 0.
-        if (!updateResult) {
-            console.warn(
-                `User ${userId} has no messages left or was not found.`
-            );
-            return {
-                success: false,
-                message: "You are out of messages.",
-            };
-        }
-
-        // --- 5. Revalidate and Return Success ---
-        revalidatePath("/profile"); // Revalidate any page that shows the message count
-
-        return {
-            success: true,
-            message: "Message count decremented.",
-            data: updateResult.value, // Return the updated user data
-        };
-    } catch (error) {
-        console.error("Failed to decrement message count:", error);
-        return {
-            success: false,
-            message: "A server error occurred while updating message count.",
-        };
-    }
+    return {
+      success: true,
+      message: "Message count decremented.",
+      data: updateResult.value,
+    };
+  } catch {
+    return {
+      success: false,
+      message: "A server error occurred while updating message count.",
+    };
+  }
 }
 
+/**
+ * Retrieves the authenticated user's saved Gemini API key.
+ * @returns A promise resolving to an object with success status and the API key (or null).
+ */
 export async function getUserGeminiApiKeyAction() {
-    // --- 1. Get Session ---
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-    if (!session?.user?.id) {
-        return {
-            success: false,
-            message: "Authentication required.",
-            apiKey: null,
-        };
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      message: "Authentication required.",
+      apiKey: null,
+    };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("user");
+
+    const userId = new ObjectId(session.user.id);
+
+    // Find the user and project only the 'geminiApiKey' field
+    const user = await collection.findOne(
+      { _id: userId },
+      { projection: { geminiApiKey: 1 } }
+    );
+
+    if (!user) {
+      return {
+        success: false,
+        message: "User not found.",
+        apiKey: null,
+      };
     }
 
-    // --- 2. Execute Database Find ---
-    try {
-        const client = await clientPromise;
-        const db = client.db(process.env.MONGODB_DB_NAME);
-        const collection = db.collection("user");
-
-        const userId = new ObjectId(session.user.id);
-
-        // Find the user, but only return the 'geminiApiKey' field for efficiency
-        const user = await collection.findOne(
-            { _id: userId },
-            { projection: { geminiApiKey: 1 } }
-        );
-
-        if (!user) {
-            return {
-                success: false,
-                message: "User not found.",
-                apiKey: null,
-            };
-        }
-
-        // --- 3. Return Success ---
-        // Return the key, or null if it's not set
-        return {
-            success: true,
-            apiKey: user.geminiApiKey || null,
-        };
-    } catch (error) {
-        console.error("Failed to get Gemini API key:", error);
-        return {
-            success: false,
-            message: "A server error occurred.",
-            apiKey: null,
-        };
-    }
+    return {
+      success: true,
+      apiKey: user.geminiApiKey || null,
+    };
+  } catch {
+    return {
+      success: false,
+      message: "A server error occurred.",
+      apiKey: null,
+    };
+  }
 }
 
+export async function clearUserGeminiApiKeyAction() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.id) {
+    return { success: false, message: "Authentication required." };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("user");
+    const userId = new ObjectId(session.user.id);
+
+    // --- MongoDB Operation ---
+    // Finds the user and sets the 'geminiApiKey' field to null
+    const updateResult = await collection.updateOne(
+      { _id: userId },
+      { $set: { geminiApiKey: null } }
+    );
+    // -------------------------
+
+    if (updateResult.matchedCount === 0) {
+      return { success: false, message: "User not found." };
+    }
+
+    return { success: true, message: "API key cleared." };
+  } catch (_error) {
+    return { success: false, message: "A server error occurred." };
+  }
+}
+
+/**
+ * Updates the authenticated user's profile data (e.g., name, profession, image).
+ * This performs a partial update, only changing the fields that are provided.
+ * @param data An object containing the fields to update.
+ * @returns A promise resolving to an object with success status and the updated user data.
+ */
 export async function updateUserProfileAction(data: UpdateUserData) {
-    // --- 1. Get Session ---
-    console.log('Executing getSession');
-    
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-    console.log('Executed getSession');
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      message: "Authentication required.",
+    };
+  }
 
-    if (!session?.user?.id) {
-        return {
-            success: false,
-            message: "Authentication required.",
-        };
+  if (!data || Object.keys(data).length === 0) {
+    return {
+      success: false,
+      message: "No data provided for update.",
+    };
+  }
+
+  // Build a $set object only with the provided, valid fields
+  const updateDoc: Partial<UpdateUserData> = {};
+
+  if (data.name !== undefined) {
+    if (typeof data.name !== "string" || data.name.length < 2) {
+      return {
+        success: false,
+        message: "Name must be at least 2 characters.",
+      };
+    }
+    updateDoc.name = data.name;
+  }
+
+  if (data.profession !== undefined) {
+    updateDoc.profession = data.profession;
+  }
+
+  if (data.image !== undefined) {
+    if (typeof data.image !== "string" || data.image.length === 0) {
+      return { success: false, message: "Invalid image URL." };
+    }
+    updateDoc.image = data.image;
+  }
+
+  if (Object.keys(updateDoc).length === 0) {
+    return {
+      success: false,
+      message: "No valid data fields provided for update.",
+    };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("user");
+
+    const userId = new ObjectId(session.user.id);
+
+    const updateResult = await collection.findOneAndUpdate(
+      { _id: userId },
+      { $set: updateDoc }, // Apply partial updates
+      { returnDocument: "after" }
+    );
+
+    if (!updateResult) {
+      return {
+        success: false,
+        message: "Failed to update profile. User not found.",
+      };
     }
 
-    // --- 2. Validate and Prepare Data ---
-    if (!data || Object.keys(data).length === 0) {
-        return {
-            success: false,
-            message: "No data provided for update.",
-        };
-    }
+    revalidatePath("/profile");
+    revalidatePath("/settings");
 
-    const updateDoc: { [key: string]: any } = {};
-
-    // We build a $set object only with the fields that were provided.
-    // This allows for partial updates (e.g., only updating 'name' or 'image').
-
-    if (data.name !== undefined) {
-        if (typeof data.name !== "string" || data.name.length < 2) {
-            return {
-                success: false,
-                message: "Name must be at least 2 characters.",
-            };
-        }
-        updateDoc.name = data.name;
-    }
-
-    if (data.profession !== undefined) {
-        // Allows setting profession to an empty string or null
-        updateDoc.profession = data.profession;
-    }
-
-    if (data.image !== undefined) {
-        if (typeof data.image !== "string" || data.image.length === 0) {
-            return { success: false, message: "Invalid image URL." };
-        }
-        updateDoc.image = data.image;
-    }
-
-    // If no valid fields were added to the update object
-    if (Object.keys(updateDoc).length === 0) {
-        return {
-            success: false,
-            message: "No valid data fields provided for update.",
-        };
-    }
-
-    // --- 3. Execute Update ---
-    try {
-        const client = await clientPromise;
-        const db = client.db(process.env.MONGODB_DB_NAME);
-        const collection = db.collection("user");
-
-        const userId = new ObjectId(session.user.id);
-
-        console.log(`Attempting to update profile for user ${userId}`);
-
-        const updateResult = await collection.findOneAndUpdate(
-            { _id: userId }, // 1. Filter
-            { $set: updateDoc }, // 2. Update document with only provided fields
-            { returnDocument: "after" } // 3. Options
-        );
-
-        if (!updateResult) {
-            console.error(
-                "Failed to update profile: Document not found or update failed."
-            );
-            return {
-                success: false,
-                message: "Failed to update profile. User not found.",
-            };
-        }
-
-        // --- 4. Revalidate and Return Success ---
-        revalidatePath("/profile");
-        revalidatePath("/settings");
-
-        return {
-            success: true,
-            message: "Profile updated successfully.",
-            data: updateResult.value, // Return the updated user
-        };
-    } catch (error) {
-        console.error("Failed to update profile:", error);
-        return {
-            success: false,
-            message: "A server error occurred during profile update.",
-        };
-    }
+    return {
+      success: true,
+      message: "Profile updated successfully.",
+      data: updateResult.value,
+    };
+  } catch {
+    return {
+      success: false,
+      message: "A server error occurred during profile update.",
+    };
+  }
 }

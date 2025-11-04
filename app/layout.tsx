@@ -1,11 +1,11 @@
 "use client";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import Sidebar from "@/components/sidebar";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Header from "@/components/header";
+import Sidebar from "@/components/sidebar";
+import { ThemeProvider } from "@/components/theme-provider";
 import { ActivityProvider } from "@/contexts/ActivityContext";
 
 const geistSans = Geist({
@@ -38,16 +38,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-        >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="flex">
-            {shouldShowSidebar && <Sidebar isCollapsed={isSidebarCollapsed} toggleSidebar={toggleSidebar} />}
+            {shouldShowSidebar && (
+              <Sidebar
+                isCollapsed={isSidebarCollapsed}
+                toggleSidebar={toggleSidebar}
+              />
+            )}
             {shouldShowSidebar && <Header />}
             <main
-              className={`flex-1 pr-4 pt-20 transition-all duration-300 ease-in-out ${
+              className={`flex-1 pt-20 pr-4 transition-all duration-300 ease-in-out ${
                 shouldShowSidebar
                   ? isSidebarCollapsed
                     ? "pl-24"
@@ -55,10 +56,7 @@ export default function RootLayout({
                   : ""
               }`}
             >
-              <ActivityProvider>
-              {children}
-              </ActivityProvider>
-                
+              <ActivityProvider>{children}</ActivityProvider>
             </main>
           </div>
         </ThemeProvider>

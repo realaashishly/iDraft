@@ -1,7 +1,13 @@
 // app/contexts/ActivityContext.tsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 // 1. Define the shape of your context data
 interface ActivityContextType {
@@ -28,7 +34,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   // Effect for time spent timer
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeSpent(prevTime => prevTime + 1);
+      setTimeSpent((prevTime) => prevTime + 1);
     }, 1000);
     return () => clearInterval(timer);
   }, []); // Runs once when the app loads
@@ -36,20 +42,20 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   // Effect for event listeners (clicks and keys)
   useEffect(() => {
     const handleClick = () => {
-      setClickCount(prev => prev + 1);
+      setClickCount((prev) => prev + 1);
     };
     const handleKeyPress = () => {
-      setKeyPressCount(prev => prev + 1);
+      setKeyPressCount((prev) => prev + 1);
     };
 
     // Add global event listeners
-    window.addEventListener('click', handleClick);
-    window.addEventListener('keydown', handleKeyPress);
+    window.addEventListener("click", handleClick);
+    window.addEventListener("keydown", handleKeyPress);
 
     // Cleanup
     return () => {
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('keydown', handleKeyPress);
+      window.removeEventListener("click", handleClick);
+      window.removeEventListener("keydown", handleKeyPress);
     };
   }, []); // Runs once when the app loads
 
@@ -57,7 +63,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const value = {
     timeSpent,
     clickCount,
-    keyPressCount
+    keyPressCount,
   };
 
   return (
@@ -72,7 +78,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
 export function useActivity() {
   const context = useContext(ActivityContext);
   if (!context) {
-    throw new Error('useActivity must be used within an ActivityProvider');
+    throw new Error("useActivity must be used within an ActivityProvider");
   }
   return context;
 }

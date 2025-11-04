@@ -1,18 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { useSession } from "@/lib/auth-client";
 import { ArrowUpRight, Edit, Trash2 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { deleteAppAction, getAppsAction } from "@/action/appActions";
 import { AddAppModal } from "@/components/AddAppModal";
-import {
-  Card,
-  CardDescription,
-  CardTitle,
-} from "@/components/ui/card";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,10 +17,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { App, getAppsAction, deleteAppAction } from "@/action/appActions";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/lib/auth-client";
+import type { App } from "@/type/types";
 
 export default function Page() {
   const { data: session, isPending: isSessionLoading } = useSession();
+  // @ts-expect-error
   const isAdmin = session?.user?.role === "admin";
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -36,7 +33,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchApps = async () => {
+  const fetchApps = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -46,19 +43,19 @@ export default function Page() {
       } else {
         setError(result.error);
       }
-    } catch (err) {
+    } catch {
       setError("Failed to fetch apps. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchApps();
-  }, []);
+  }, [fetchApps]);
 
   // --- MODIFICATION: Removed window.confirm ---
-  const handleDelete = async (appId: string, appName: string) => {
+  const handleDelete = async (appId: string) => {
     // The confirmation is now handled by the AlertDialog
     try {
       const result = await deleteAppAction(appId);
@@ -68,10 +65,10 @@ export default function Page() {
         throw new Error(result.error);
       }
     } catch (err) {
-      console.error("Failed to delete app:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Failed to delete app.";
-      window.alert(`Error: ${errorMessage}`); // You could replace this with a Toast
+
+      setError(errorMessage);
     }
   };
 
@@ -83,9 +80,9 @@ export default function Page() {
   };
 
   return (
-    <div className='p-4'>
-      <div className='mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
-        <h1 className='text-3xl font-bold'>Latest Apps</h1>
+    <div className="p-4">
+      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <h1 className="font-bold text-3xl">Latest Apps</h1>
         {!isSessionLoading && isAdmin && (
           <Button
             onClick={() => {
@@ -99,67 +96,45 @@ export default function Page() {
       </div>
 
       {isLoading && (
-        <p className='text-center text-muted-foreground'>
-          Loading apps...
-        </p>
+        <p className="text-center text-muted-foreground">Loading apps...</p>
       )}
-      {error && (
-        <p className='text-center font-medium text-red-500'>{error}</p>
-      )}
+      {error && <p className="text-center font-medium text-red-500">{error}</p>}
 
-      {!isLoading && !error && (
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+      {!(isLoading || error) && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {apps.length > 0 ? (
-            apps.slice(0, 4).map((app) => (
-              <div key={app.id} className='relative group pt-5'>
+            apps.map((app) => (
+              <div className="group relative pt-5" key={app.id}>
                 {isAdmin && (
-                  <div
-                    className="
-                      absolute 
-                      top-0 
-                      right-2 
-                      flex 
-                      gap-2 
-                      opacity-0 
-                      group-hover:opacity-100 
-                      transition-opacity 
-                      duration-200 
-                      z-10
-                    "
-                  >
+                  <div className="absolute top-0 right-2 z-10 flex gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                     <Button
-                      variant='outline'
-                      size='icon'
-                      className='bg-background shadow-md cursor-pointer'
+                      className="cursor-pointer bg-background shadow-md"
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
                         setAppToEdit(app);
                         setIsModalOpen(true);
                       }}
+                      size="icon"
+                      variant="outline"
                     >
-                      <Edit className='h-4 w-4' />
-                      <span className='sr-only'>
-                        Edit {app.appName}
-                      </span>
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">Edit {app.appName}</span>
                     </Button>
 
                     {/* --- MODIFICATION: Replaced Button with AlertDialog --- */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          variant='destructive'
-                          size='icon'
-                          className='shadow-md cursor-pointer'
+                          className="cursor-pointer shadow-md"
                           onClick={(e) => {
                             e.stopPropagation();
-                           
-                          }} // Prevent link click, open dialog
+                          }}
+                          size="icon"
+                          variant="destructive" // Prevent link click, open dialog
                         >
-                          <Trash2 className='h-4 w-4' />
-                          <span className='sr-only'>
-                            Delete {app.appName}
-                          </span>
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete {app.appName}</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent
@@ -170,18 +145,20 @@ export default function Page() {
                             Are you absolutely sure?
                           </AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will
-                            permanently delete the app &quot;
+                            This action cannot be undone. This will permanently
+                            delete the app &quot;
                             {app.appName}&quot;.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            className={buttonVariants({ variant: "destructive" })}
+                            className={buttonVariants({
+                              variant: "destructive",
+                            })}
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(app.id, app.appName);
+                              handleDelete(app.id);
                             }}
                           >
                             Delete
@@ -191,40 +168,39 @@ export default function Page() {
                     </AlertDialog>
                   </div>
                 )}
-                <Card className='flex flex-col justify-between p-4 transition-shadow hover:shadow-md h-full'>
+                <Card className="flex h-full flex-col justify-between p-4 transition-shadow hover:shadow-md">
                   <Link
+                    className="block h-full"
                     href={app.appLink}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='block h-full'
+                    rel="noopener noreferrer"
+                    target="_blank"
                   >
-                    <div className='flex flex-row items-center justify-between'>
-                      <div className='flex items-center gap-4 min-w-0 flex-1'>
+                    <div className="flex flex-row items-center justify-between">
+                      <div className="flex min-w-0 flex-1 items-center gap-4">
                         <Image
-                          src={app.logoUrl}
                           alt={`${app.appName} logo`}
-                          width={56}
+                          className="h-16 w-16 shrink-0 rounded-md border object-cover"
                           height={56}
-                          className='rounded-md border object-cover shrink-0 w-16 h-16'
+                          src={app.logoUrl}
+                          width={56}
                         />
-                        <div className='flex flex-col justify-center min-w-0 flex-1'>
-                          <CardTitle className='text-base font-semibold truncate'>
+                        <div className="flex min-w-0 flex-1 flex-col justify-center">
+                          <CardTitle className="truncate font-semibold text-base">
                             {app.appName}
                           </CardTitle>
-                          <CardDescription className='text-sm text-muted-foreground truncate'>
-                            {app.appDescription ||
-                              "No description available."}
+                          <CardDescription className="truncate text-muted-foreground text-sm">
+                            {app.appDescription || "No description available."}
                           </CardDescription>
                         </div>
                       </div>
-                      <ArrowUpRight className='h-5 w-5 text-muted-foreground shrink-0 ml-4' />
+                      <ArrowUpRight className="ml-4 h-5 w-5 shrink-0 text-muted-foreground" />
                     </div>
                   </Link>
                 </Card>
               </div>
             ))
           ) : (
-            <p className='col-span-full text-center text-muted-foreground'>
+            <p className="col-span-full text-center text-muted-foreground">
               No apps have been added yet.
             </p>
           )}
@@ -232,10 +208,10 @@ export default function Page() {
       )}
 
       <AddAppModal
-        isOpen={isModalOpen}
-        onOpenChange={handleModalOpenChange}
-        onAppCreated={fetchApps}
         appToEdit={appToEdit}
+        isOpen={isModalOpen}
+        onAppCreated={fetchApps}
+        onOpenChange={handleModalOpenChange}
       />
     </div>
   );

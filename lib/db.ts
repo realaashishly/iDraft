@@ -1,11 +1,11 @@
 // lib/db.ts
-import { MongoClient, Db } from 'mongodb';
+import { type Db, MongoClient } from "mongodb";
 
 if (!process.env.MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable');
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
 if (!process.env.MONGODB_DB_NAME) {
-  throw new Error('Please define the MONGODB_DB_NAME environment variable');
+  throw new Error("Please define the MONGODB_DB_NAME environment variable");
 }
 
 // Augment the global type to hold our cached connection
@@ -17,7 +17,7 @@ let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 let db: Db;
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   // In development mode, use a global variable so that the value
   // is preserved across module reloads caused by HMR (Hot Module Replacement).
   if (!globalForMongo._mongoClientPromise) {

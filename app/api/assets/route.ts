@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import Asset from "@/models/Asset";
 import { clientPromise } from "@/lib/db";
+import Asset from "@/models/Asset";
 
 export async function GET() {
   await clientPromise;

@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { AssetCard, AssetCardSkeleton } from "@/components/Assets/AssetsCard";
-import AssetUploadButton from "@/components/Assets/AssetUploadButton";
+import { Loader2, Search, SlidersHorizontal } from "lucide-react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { deleteAsset, getAssets, updateAsset } from "@/action/assetAction";
 import { AssetDetailModal } from "@/components/Assets/AssetDetails";
 import { AssetEditModal } from "@/components/Assets/AssetEditModal";
-import { Asset } from "@/lib/types";
-import { getAssets, deleteAsset, updateAsset } from "@/action/assetAction";
-import { useSession } from "@/lib/auth-client";
+import { AssetCard, AssetCardSkeleton } from "@/components/Assets/AssetsCard";
+import AssetUploadButton from "@/components/Assets/AssetUploadButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Search, SlidersHorizontal } from "lucide-react"; // <-- UPDATED IMPORTS
 
-// --- NEW IMPORTS ---
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -35,17 +38,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// --- END NEW IMPORTS ---
-
+import { useSession } from "@/lib/auth-client";
+import type { Asset } from "@/type/types";
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [assetToConfirmDelete, setAssetToConfirmDelete] = useState<Asset | null>(null);
+  const [assetToConfirmDelete, setAssetToConfirmDelete] =
+    useState<Asset | null>(null);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [fileTypeFilter, setFileTypeFilter] = useState("all");
 
@@ -56,8 +61,13 @@ export default function AssetsPage() {
     try {
       const fetchedAssets = await getAssets();
       setAssets(fetchedAssets);
-    } catch (error) {
-      console.error("Failed to load assets:", error);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        // Handle cases where a non-Error was thrown
+        setError(new Error("An unknown error occurred"));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -67,19 +77,20 @@ export default function AssetsPage() {
     loadAssets();
   }, [loadAssets]);
 
-  const filteredAssets = useMemo(() => {
-    return assets.filter((asset) => {
-      const searchMatch =
-        asset.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const typeMatch =
-        fileTypeFilter === "all" ||
-        asset.fileType?.startsWith(fileTypeFilter);
-      return searchMatch && typeMatch;
-    });
-  }, [assets, searchTerm, fileTypeFilter]);
+  const filteredAssets = useMemo(
+    () =>
+      assets.filter((asset) => {
+        const searchMatch =
+          asset.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          asset.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const typeMatch =
+          fileTypeFilter === "all" ||
+          asset.fileType?.startsWith(fileTypeFilter);
+        return searchMatch && typeMatch;
+      }),
+    [assets, searchTerm, fileTypeFilter]
+  );
 
-  // ... (handleDelete and handleUpdate functions remain the same) ...
   const handleDelete = async (assetId: string) => {
     setDeletingAssetId(assetId);
     try {
@@ -92,8 +103,13 @@ export default function AssetsPage() {
       } else {
         throw new Error(result.error);
       }
-    } catch (error: any) {
-      console.error("Failed to delete asset:", error);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        // Handle cases where a non-Error was thrown
+        setError(new Error("An unknown error occurred"));
+      }
     } finally {
       setDeletingAssetId(null);
     }
@@ -103,7 +119,9 @@ export default function AssetsPage() {
     title: string;
     description: string;
   }) => {
-    if (!editingAsset) throw new Error("No asset selected for editing.");
+    if (!editingAsset) {
+      throw new Error("No asset selected for editing.");
+    }
 
     try {
       const result = await updateAsset(editingAsset.id, payload);
@@ -118,11 +136,65 @@ export default function AssetsPage() {
       } else {
         throw new Error(result.error || "Failed to update asset.");
       }
-    } catch (error: any) {
-      console.error("Failed to update asset:", error);
-      throw error;
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err);
+      } else {
+        // Handle cases where a non-Error was thrown
+        setError(new Error("An unknown error occurred"));
+      }
     }
   };
+
+  // --- REFACTORED LOGIC ---
+  // This logic was moved out of the JSX to avoid nested ternaries.
+  let gridContent: ReactNode;
+
+  if (isLoading) {
+    // 1. Loading state
+    gridContent = (
+      <>
+        <AssetCardSkeleton />
+        <AssetCardSkeleton />
+        <AssetCardSkeleton />
+        <AssetCardSkeleton />
+      </>
+    );
+  } else if (error) {
+    // 4. Error state
+    gridContent = (
+      <p className="col-span-full text-center text-destructive">
+        Failed to load assets: {error.message}
+      </p>
+    );
+  } else if (filteredAssets.length === 0) {
+    // 2. Empty state (also fixed the nested ternary for the message)
+    const emptyMessage =
+      assets.length === 0
+        ? "No assets found. Upload your first file!"
+        : "No assets match your search or filter.";
+
+    gridContent = (
+      <p className="col-span-full text-center text-muted-foreground">
+        {emptyMessage}
+      </p>
+    );
+  } else {
+    // 3. Data state
+    gridContent = filteredAssets.map((asset) => (
+      <AssetCard
+        asset={asset}
+        // @ts-expect-error
+        isAdmin={session?.user.role === "admin"}
+        isDeleting={deletingAssetId === asset.id}
+        key={asset.id}
+        onClick={() => setSelectedAsset(asset)}
+        onDelete={() => setAssetToConfirmDelete(asset)}
+        onEdit={() => setEditingAsset(asset)}
+      />
+    ));
+  }
+  // --- END REFACTORED LOGIC ---
 
   return (
     <>
@@ -130,14 +202,17 @@ export default function AssetsPage() {
       <Collapsible>
         <div className="p-4">
           {/* --- UPDATED HEADER --- */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">Your Assets</h1>
-            <div className="flex items-center gap-2"> {/* Wrapper for buttons */}
+          <div className="mb-8 flex items-center justify-between">
+            <h1 className="font-bold text-3xl">Your Assets</h1>
+            <div className="flex items-center gap-2">
+              {" "}
+              {/* Wrapper for buttons */}
               <CollapsibleTrigger asChild>
-                <Button variant='outline' size='icon'>
-                  <SlidersHorizontal className='h-4 w-4' />
+                <Button size="icon" variant="outline">
+                  <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               </CollapsibleTrigger>
+              {/* @ts-expect-error */}
               {session?.user.role === "admin" && (
                 <AssetUploadButton onUploadComplete={loadAssets} />
               )}
@@ -145,20 +220,19 @@ export default function AssetsPage() {
           </div>
           {/* --- END UPDATED HEADER --- */}
 
-
           {/* --- UPDATED FILTER/SEARCH BAR (NOW COLLAPSIBLE) --- */}
           <CollapsibleContent>
-            <div className="mb-8 flex flex-col gap-4 md:flex-row animate-in fade-in-0 slide-in-from-top-4 duration-300">
+            <div className="fade-in-0 slide-in-from-top-4 mb-8 flex animate-in flex-col gap-4 duration-300 md:flex-row">
               <div className="relative flex-1">
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                <Search className="-translate-y-1/2 absolute top-1/2 left-3 h-4 w-4 text-muted-foreground" />
                 <Input
+                  className="w-full pl-10"
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by title or description..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full"
                 />
               </div>
-              <Select value={fileTypeFilter} onValueChange={setFileTypeFilter}>
+              <Select onValueChange={setFileTypeFilter} value={fileTypeFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
@@ -174,35 +248,9 @@ export default function AssetsPage() {
           </CollapsibleContent>
           {/* --- END FILTER/SEARCH BAR --- */}
 
-
-          {/* --- Asset grid (Unchanged) --- */}
+          {/* --- Asset grid (NOW CLEANED UP) --- */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {isLoading ? (
-              <>
-                <AssetCardSkeleton />
-                <AssetCardSkeleton />
-                <AssetCardSkeleton />
-                <AssetCardSkeleton />
-              </>
-            ) : filteredAssets.length === 0 ? (
-              <p className="col-span-full text-center text-muted-foreground">
-                {assets.length === 0
-                  ? "No assets found. Upload your first file!"
-                  : "No assets match your search or filter."}
-              </p>
-            ) : (
-              filteredAssets.map((asset) => (
-                <AssetCard
-                  key={asset.id}
-                  asset={asset}
-                  onClick={() => setSelectedAsset(asset)}
-                  isAdmin={session?.user.role === "admin"}
-                  onEdit={() => setEditingAsset(asset)}
-                  onDelete={() => setAssetToConfirmDelete(asset)}
-                  isDeleting={deletingAssetId === asset.id}
-                />
-              ))
-            )}
+            {gridContent}
           </div>
           {/* --- END Asset grid --- */}
 
@@ -221,8 +269,8 @@ export default function AssetsPage() {
             />
           )}
           <AlertDialog
-            open={!!assetToConfirmDelete}
             onOpenChange={() => setAssetToConfirmDelete(null)}
+            open={!!assetToConfirmDelete}
           >
             {assetToConfirmDelete && (
               <AlertDialogContent>
@@ -242,10 +290,11 @@ export default function AssetsPage() {
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     disabled={deletingAssetId === assetToConfirmDelete.id}
                     onClick={async (e) => {
-                      e.preventDefault(); 
+                      e.preventDefault();
                       await handleDelete(assetToConfirmDelete.id);
                     }}
                   >
+                    {/* This single ternary is fine as it's not nested */}
                     {deletingAssetId === assetToConfirmDelete.id ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : null}

@@ -1,24 +1,16 @@
 // actions/assetActions.ts
 "use server";
 
-import { clientPromise } from "@/lib/db";
-import { revalidatePath } from "next/cache";
-import { type Asset } from "@/lib/types";
 import { ObjectId } from "mongodb";
+import { revalidatePath } from "next/cache";
+import { clientPromise } from "@/lib/db";
+import type { Asset, AssetData, UpdateAssetPayload } from "@/type/types";
 
-interface AssetData {
-  title: string;
-  description: string;
-  fileUrl: string;
-  fileType: string;
-  fileSize: string;
-}
-
-interface UpdateAssetPayload {
-  title: string;
-  description: string;
-}
-
+/**
+ * Creates a new asset document in the database.
+ * @param assetData The data for the new asset.
+ * @returns An object with success status and the created asset data.
+ */
 export async function createAsset(assetData: AssetData) {
   try {
     const client = await clientPromise;
@@ -31,62 +23,64 @@ export async function createAsset(assetData: AssetData) {
     };
 
     const insertResult = await collection.insertOne(assetDocument);
-
-    // --- FIX IS HERE ---
-    // Convert the returned document (especially the _id) to a plain object
     const savedAsset = {
-        id: insertResult.insertedId.toString(), // Convert ObjectId to string
-        title: assetDocument.title,
-        description: assetDocument.description,
-        fileUrl: assetDocument.fileUrl,
-        fileType: assetDocument.fileType,
-        fileSize: assetDocument.fileSize,
-        createdAt: assetDocument.createdAt,
-    }
-    // --- END FIX ---
+      id: insertResult.insertedId.toString(),
+      title: assetDocument.title,
+      description: assetDocument.description,
+      fileUrl: assetDocument.fileUrl,
+      fileType: assetDocument.fileType,
+      fileSize: assetDocument.fileSize,
+      createdAt: assetDocument.createdAt,
+    };
 
-    revalidatePath("/assets"); // Adjust path if needed
+    // Revalidate the assets page cache to show the new data
+    revalidatePath("/assets");
 
-    // Return the plain object, not the raw MongoDB document
-    return { success: true, data: savedAsset }; 
-
-  } catch (error) {
-    console.error("Failed to create asset:", error);
+    return { success: true, data: savedAsset };
+  } catch {
     return { success: false, error: "Failed to save to database." };
   }
 }
 
+/**
+ * Fetches all assets from the database, sorted by creation date.
+ * @returns A promise that resolves to an array of Asset objects.
+ */
 export async function getAssets(): Promise<Asset[]> {
-    try {
-        const client = await clientPromise;
-        const db = client.db(process.env.MONGODB_DB_NAME);
-        const collection = db.collection("assets");
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const collection = db.collection("assets");
 
-        // Fetch all documents, sort by creation date descending
-        const assetsFromDb = await collection.find({})
-            .sort({ createdAt: -1 }) // Sort newest first
-            .toArray();
+    const assetsFromDb = await collection
+      .find({})
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .toArray();
 
-        // Map the MongoDB documents to your Asset type, ensuring serializability
-        const assets: Asset[] = assetsFromDb.map((doc) => ({
-            id: doc._id.toString(), // Convert ObjectId to string
-            title: doc.title,
-            description: doc.description,
-            fileUrl: doc.fileUrl,
-            fileType: doc.fileType,
-            fileSize: doc.fileSize,
-            // Ensure createdAt is a Date object (it should be, but belt-and-suspenders)
-            createdAt: doc.createdAt instanceof Date ? doc.createdAt : new Date(doc.createdAt),
-        }));
+    // Map MongoDB document format (_id) to application format (id)
+    const assets: Asset[] = assetsFromDb.map((doc) => ({
+      id: doc._id.toString(),
+      title: doc.title,
+      description: doc.description,
+      fileUrl: doc.fileUrl,
+      fileType: doc.fileType,
+      fileSize: doc.fileSize,
+      createdAt:
+        doc.createdAt instanceof Date ? doc.createdAt : new Date(doc.createdAt),
+    }));
 
-        return assets;
-    } catch (error) {
-        console.error("Failed to fetch assets:", error);
-        return []; // Return empty array on error
-    }
+    return assets;
+  } catch {
+    return [];
+  }
 }
 
-
+/**
+ * Updates an existing asset's title and description.
+ * @param assetId The ID of the asset to update.
+ * @param payload An object containing the new title and description.
+ * @returns An object with success status and the updated asset data.
+ */
 export async function updateAsset(
   assetId: string,
   payload: UpdateAssetPayload
@@ -103,15 +97,14 @@ export async function updateAsset(
       $set: {
         title: payload.title,
         description: payload.description,
-        updatedAt: new Date(), // Optional: track updates
+        updatedAt: new Date(), // Track update timestamp
       },
     };
 
-    // Find the document and update it, returning the *new* document
     const findOneAndUpdateResult = await collection.findOneAndUpdate(
       { _id: objectId },
       updateDocument,
-      { returnDocument: "after" } // Returns the document *after* the update
+      { returnDocument: "after" } // Ensures the *updated* document is returned
     );
 
     if (!findOneAndUpdateResult) {
@@ -132,18 +125,18 @@ export async function updateAsset(
       updatedAt: updatedDoc.updatedAt,
     };
 
-    revalidatePath("/assets"); // Revalidate the path to show new data
+    // Revalidate the assets page cache
+    revalidatePath("/assets");
     return { success: true, data: savedAsset };
-  } catch (error) {
-    console.error("Failed to update asset:", error);
+  } catch {
     return { success: false, error: "Failed to update asset." };
   }
 }
 
-// --- NEW FUNCTION: deleteAsset ---
 /**
  * Deletes an asset from the database.
- * @param assetId The string ID of the asset to delete.
+ * @param assetId The ID of the asset to delete.
+ * @returns An object with success status.
  */
 export async function deleteAsset(assetId: string) {
   try {
@@ -151,7 +144,7 @@ export async function deleteAsset(assetId: string) {
     const db = client.db(process.env.MONGODB_DB_NAME);
     const collection = db.collection("assets");
 
-    // Convert the string ID back to a MongoDB ObjectId
+    // Convert string ID to MongoDB ObjectId
     const objectId = new ObjectId(assetId);
 
     const deleteResult = await collection.deleteOne({ _id: objectId });
@@ -160,10 +153,10 @@ export async function deleteAsset(assetId: string) {
       return { success: false, error: "Asset not found." };
     }
 
-    revalidatePath("/assets"); // Revalidate the path to update the list
+    // Revalidate the assets page cache
+    revalidatePath("/assets");
     return { success: true };
-  } catch (error) {
-    console.error("Failed to delete asset:", error);
+  } catch {
     return { success: false, error: "Failed to delete asset." };
   }
 }

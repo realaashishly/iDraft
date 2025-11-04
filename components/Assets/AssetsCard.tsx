@@ -1,19 +1,19 @@
 "use client";
 
-import Image from "next/image";
 import {
-  File,
-  Download,
-  FileText,
-  Video,
   AudioWaveform,
+  Download,
   Edit,
-  Trash2,
+  File,
+  FileText,
   Loader2,
+  Trash2,
+  Video,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { type Asset } from "@/lib/types";
+import Image from "next/image";
 import { useRef, useState } from "react";
+import type { Asset } from "@/type/types";
+import { Button } from "../ui/button";
 
 // --- Helper Functions ---
 function getIconForType(fileType: string | undefined) {
@@ -31,17 +31,17 @@ function getIconForType(fileType: string | undefined) {
 
 function timeAgo(date: Date): string {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  let interval = seconds / 31536000;
+  let interval = seconds / 31_536_000;
   if (interval > 1)
     return `Uploaded ${Math.floor(interval)} year${
       Math.floor(interval) > 1 ? "s" : ""
     } ago`;
-  interval = seconds / 2592000;
+  interval = seconds / 2_592_000;
   if (interval > 1)
     return `Uploaded ${Math.floor(interval)} month${
       Math.floor(interval) > 1 ? "s" : ""
     } ago`;
-  interval = seconds / 86400;
+  interval = seconds / 86_400;
   if (interval > 1)
     return `Uploaded ${Math.floor(interval)} day${
       Math.floor(interval) > 1 ? "s" : ""
@@ -106,40 +106,40 @@ export function AssetCard({
 
   return (
     <div
-      ref={cardRef}
-      className="asset-card relative overflow-hidden bg-card rounded-xl border border-transparent hover:border-primary/30 transition-all duration-300 cursor-pointer perspective-1000 group"
+      className="asset-card perspective-1000 group relative cursor-pointer overflow-hidden rounded-xl border border-transparent bg-card transition-all duration-300 hover:border-primary/30"
       onClick={onClick}
-      onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
+      ref={cardRef}
       style={{ willChange: "transform" }}
     >
       {/* --- Admin Buttons --- */}
       {isAdmin && (
-        <div className="absolute top-2 right-2 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 z-10 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
           <Button
-            size="icon"
-            variant="secondary"
             className="h-8 w-8 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation(); // Prevent card's main onClick
               onEdit();
             }}
+            size="icon"
+            variant="secondary"
           >
             <Edit className="h-4 w-4" />
           </Button>
           <Button
-            size="icon"
-            variant="destructive"
             className="h-8 w-8 cursor-pointer"
+            disabled={isDeleting}
             onClick={(e) => {
               e.stopPropagation(); // Prevent card's main onClick
-              
+
               // --- UPDATE ---
               // Removed window.confirm. Parent component now handles confirmation.
               onDelete();
               // --- END UPDATE ---
             }}
-            disabled={isDeleting}
+            size="icon"
+            variant="destructive"
           >
             {isDeleting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -152,38 +152,36 @@ export function AssetCard({
 
       {/* --- Tilt Container --- */}
       <div
-        className="relative aspect-4/3 w-full bg-muted flex items-center justify-center overflow-hidden rounded-xl transform-style-preserve-3d transition-transform duration-300 ease-out"
+        className="transform-style-preserve-3d relative flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-xl bg-muted transition-transform duration-300 ease-out"
         style={{
           transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
         }}
       >
         {asset.fileType?.startsWith("image") && asset.fileUrl ? (
           <Image
-            src={asset.fileUrl}
             alt={asset.title}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            src={asset.fileUrl}
           />
         ) : (
           getIconForType(asset.fileType)
         )}
 
         {/* --- Overlay Info --- */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-linear-to-t from-black/60 via-black/30 to-transparent">
-          <div className="bg-black/30 backdrop-blur-sm p-3 rounded-lg flex items-center justify-between text-white">
-            <div className="overflow-hidden mr-2">
-              <h3 className="font-semibold truncate text-sm">{asset.title}</h3>
-              <p className="text-xs text-gray-300 mt-1">{uploadedTime}</p>
+        <div className="absolute right-0 bottom-0 left-0 bg-linear-to-t from-black/60 via-black/30 to-transparent p-3">
+          <div className="flex items-center justify-between rounded-lg bg-black/30 p-3 text-white backdrop-blur-sm">
+            <div className="mr-2 overflow-hidden">
+              <h3 className="truncate font-semibold text-sm">{asset.title}</h3>
+              <p className="mt-1 text-gray-300 text-xs">{uploadedTime}</p>
             </div>
 
-            <div className="flex items-center shrink-0">
+            <div className="flex shrink-0 items-center">
               {asset.fileUrl && (
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="ml-1 text-white hover:text-primary transition-colors p-2 rounded-full hover:bg-black/50 h-auto w-auto cursor-pointer"
                   aria-label={`Download ${asset.title}`}
+                  className="ml-1 h-auto w-auto cursor-pointer rounded-full p-2 text-white transition-colors hover:bg-black/50 hover:text-primary"
                   onClick={async (e) => {
                     e.stopPropagation();
                     if (!asset.fileUrl) return;
@@ -208,6 +206,8 @@ export function AssetCard({
                       window.open(asset.fileUrl, "_blank");
                     }
                   }}
+                  size="icon"
+                  variant="ghost"
                 >
                   <Download className="h-4 w-4" />
                 </Button>
@@ -223,11 +223,11 @@ export function AssetCard({
 // --- Skeleton Loader ---
 export function AssetCardSkeleton() {
   return (
-    <div className="bg-card rounded-xl overflow-hidden animate-pulse border border-border/10">
-      <div className="aspect-4/3 bg-muted/40"></div>
-      <div className="p-4 space-y-2">
-        <div className="h-5 w-3/4 bg-muted/40 rounded"></div>
-        <div className="h-4 w-1/2 bg-muted/40 rounded"></div>
+    <div className="animate-pulse overflow-hidden rounded-xl border border-border/10 bg-card">
+      <div className="aspect-4/3 bg-muted/40" />
+      <div className="space-y-2 p-4">
+        <div className="h-5 w-3/4 rounded bg-muted/40" />
+        <div className="h-4 w-1/2 rounded bg-muted/40" />
       </div>
     </div>
   );
