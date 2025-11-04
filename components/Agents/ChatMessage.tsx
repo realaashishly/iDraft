@@ -7,12 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ChatMessageProps } from "@/type/types";
+import { MODELS } from "@/contants";
 
-const MODELS = [
-  { id: "gpt-3.5-turbo", name: "GEMINI PRO" },
-  { id: "gpt-4", name: "GPT-4" },
-  { id: "gpt-4-32k", name: "GPT-4-32k" },
-]
 
 export default function ChatMessage({
   message,

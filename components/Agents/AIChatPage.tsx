@@ -56,7 +56,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { MODELS } from "@/constant/models";
 import { useSession } from "@/lib/auth-client";
 import type {
   AIChatInterfaceProps,
@@ -66,6 +65,7 @@ import type {
   MessagePayload,
 } from "@/type/types";
 import ChatMessage from "./ChatMessage";
+import { MODELS } from "@/contants";
 
 // --- Main Chat Interface Component ---
 export default function AIChatInterface({ agent }: AIChatInterfaceProps) {

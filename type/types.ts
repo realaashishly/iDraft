@@ -1,3 +1,4 @@
+import type { Agent } from "@/action/agentActions";
 import type { ObjectId } from "mongodb";
 
 export type CreateAgentPayload = {
@@ -176,9 +177,9 @@ export type HistoryMessage = {
   createdAt: Date | string;
 }
 
-// export type  AIChatInterfaceProps = {
-//   agent: Agent;
-// }
+export type  AIChatInterfaceProps = {
+  agent: Agent;
+}
 
 export type SessionWithToken = {
   accessToken?: string | null;
