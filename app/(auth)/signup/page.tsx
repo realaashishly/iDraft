@@ -90,7 +90,7 @@ export default function SignupPage() {
           {/* Left Side Info Panel */}
           <div className="hidden flex-col justify-center bg-linear-to-br from-gray-900 to-black p-12 md:flex">
             <div className="flex flex-col items-center text-center">
-              <h1 className="font-bold text-4xl text-foreground">iDraft</h1>
+              <h1 className="font-bold text-4xl text-foreground">Klaytic</h1>
               <p className="mt-4 text-lg text-muted-foreground">
                 {/* === TYPO FIX === */}
                 Your secure hub for professional work and digital assets.

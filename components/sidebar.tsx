@@ -12,22 +12,13 @@ import {
     Slack,
     Github,
     Plug, // Connect Icon
-    CheckCircle, // Connected Icon
+    CheckCircle,
+    User2,
+    Pin, // Connected Icon
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useState, useEffect } from "react";
-import { FaDiscord } from "react-icons/fa";
 
-// 1. Import Auth Hooks and Connection Functions
-import { connectGithub, useSession } from "@/lib/auth-client";
-import {
-    connectDiscord,
-    connectSlack,
-    connectSpotify,
-    requestGoogleMailAccess,
-} from "@/lib/auth-client";
-import { checkProviderConnection } from "@/action/providerCheckAction";
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -62,57 +53,8 @@ interface SidebarSectionProps {
 
 export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
     const pathname = usePathname();
-    const { data: session } = useSession();
 
-    const [appConnections, setAppConnections] = useState<
-        Record<string, boolean>
-    >({
-        spotify: false,
-        google: false,
-        slack: false,
-        github: false,
-        discord: false,
-    });
-
-    useEffect(() => {
-        async function fetchConnections() {
-            try {
-                const { success, data } = await checkProviderConnection();
-                
-                if (success) {
-                    setAppConnections(data);
-                } else {
-                    console.error("Failed to fetch provider connections.");
-                }
-            } catch (e) {
-                console.error("Error fetching connections:", e);
-            }
-        }
-
-        fetchConnections();
-
-
-    }, [session]);
-
-    // 2. CONNECTION HANDLER
-    const handleConnect = async (key: string) => {
-        try {
-            let socialConnect;
-            if (key === "google") {
-                socialConnect = await requestGoogleMailAccess();
-            } else if (key === "discord") {
-                socialConnect = await connectDiscord();
-            } else if (key === "spotify") {
-                socialConnect = await connectSpotify();
-            } else if (key === "slack") {
-                socialConnect = await connectSlack();
-            } else if (key === "github") {
-                socialConnect = await connectGithub();
-            }
-        } catch (e) {
-            console.error(`Failed to start connection flow for ${key}`, e);
-        }
-    };
+    
 
     // 3. Disconnect Handler (REMOVED)
 
@@ -121,16 +63,11 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         { name: "Dashboard", icon: Home, href: "/dashboard" },
         { name: "Prompts", icon: Users, href: "/prompts" },
         { name: "Assets", icon: Package, href: "/assets" },
+        {name: "Links", icon: Pin, href: '/links'},
+        {name: 'Market', icon: Plug, href: '/market-caps'},
+        {name: 'Profile', icon: User2, href: '/profile'}
     ];
 
-    // App items
-    const appItems: AppItem[] = [
-        { name: "Spotify", icon: Music, key: "spotify" },
-        // { name: "Google Mail", icon: Mail, key: "google" },
-        { name: "Slack", icon: Slack, key: "slack" },
-        { name: "Github", icon: Github, key: "github" },
-        { name: "Discord", icon: FaDiscord, key: "discord" },
-    ];
 
     return (
         <aside
@@ -146,10 +83,10 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                     }`}
                 >
                     <div className='flex h-8 w-8 items-center justify-center rounded-sm bg-black'>
-                        <span className='font-bold text-white text-xs'>i</span>
+                        <span className='font-bold text-white text-xs'>K</span>
                     </div>
                     <h1 className='font-bold text-lg dark:text-white'>
-                        iDraft
+                        Klaytic
                     </h1>
                 </div>
                 <button
@@ -171,15 +108,7 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                     pathname={pathname}
                     title='Main'
                 />
-                <SidebarSection
-                    isCollapsed={isCollapsed}
-                    items={appItems}
-                    pathname={pathname}
-                    title='Apps'
-                    appConnections={appConnections}
-                    handleConnect={handleConnect}
-                    // handleDisconnect prop removed
-                />
+                
             </nav>
 
             {/* --- Footer --- */}
@@ -305,7 +234,7 @@ SidebarSectionProps) {
                                             // "Connect" state is blue and has hover/cursor.
                                             className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white transition-colors ${
                                                 isConnected
-                                                    ? "bg-green-600" // "Connected" state (visual badge only)
+                                                    ? "border" // "Connected" state (visual badge only)
                                                     : "bg-blue-500 hover:bg-blue-600 cursor-pointer" // "Connect" state
                                             }`}
                                             // =================================================

@@ -93,16 +93,16 @@ export default function TodoList() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header: Unchanged */}
-      <h3 className="mb-4 flex items-center font-semibold text-lg text-white">
-        <ListTodo className="mr-2 h-5 w-5 text-indigo-400" /> Daily Focus (
-        {pendingTasks}/{MAX_TASKS})
+      {/* Header */}
+      <h3 className="mb-4 flex items-center text-lg font-semibold text-zinc-900 dark:text-white">
+        <ListTodo className="mr-2 h-5 w-5 text-indigo-500 dark:text-indigo-400" />{" "}
+        Daily Focus ({pendingTasks}/{MAX_TASKS})
       </h3>
 
-      {/* Task Input: Restyled for a cleaner look */}
+      {/* Task Input */}
       <div className="mb-4 flex space-x-2">
         <input
-          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 p-2 text-zinc-100 placeholder-zinc-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-zinc-300 bg-white p-2 text-zinc-900 placeholder-zinc-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-400"
           disabled={tasks.length >= MAX_TASKS}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -112,24 +112,22 @@ export default function TodoList() {
               : "Maximum tasks reached"
           }
           type="text"
-          // Use a subtle border, and a blue ring on focus
           value={newTask}
         />
         <button
-          className="rounded-lg border border-zinc-700 bg-zinc-800 p-2 text-indigo-400 transition-colors hover:bg-zinc-700 hover:text-indigo-300 disabled:bg-zinc-800 disabled:text-zinc-600"
+          className="rounded-lg border border-zinc-300 bg-white p-2 text-indigo-500 transition-colors hover:bg-zinc-100 hover:text-indigo-600 disabled:bg-zinc-50 disabled:text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-indigo-400 dark:hover:bg-zinc-700 dark:hover:text-indigo-300 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-600"
           disabled={tasks.length >= MAX_TASKS || newTask.trim() === ""}
-          // Button is now subtle, matching the input field
           onClick={addTask}
         >
           <Plus className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Task List: Removed padding and using space-y-2 for tighter spacing */}
+      {/* Task List */}
       <ul className="flex-1 space-y-2 overflow-y-auto">
         {tasks.map((task) => (
           <li
-            className="group flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-zinc-800"
+            className="group flex items-center justify-between rounded-lg p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
             key={task.id}
           >
             {/* Make the main task area clickable for toggling */}
@@ -137,30 +135,29 @@ export default function TodoList() {
               className="flex min-w-0 flex-1 cursor-pointer items-center"
               onClick={() => toggleComplete(task.id)}
             >
-              {/* New Checkbox Icon */}
+              {/* Checkbox Icon */}
               {task.isCompleted ? (
-                <CheckCircle2 className="mr-3 h-5 w-5 shrink-0 text-indigo-400" />
+                <CheckCircle2 className="mr-3 h-5 w-5 shrink-0 text-indigo-500 dark:text-indigo-400" />
               ) : (
-                <Circle className="mr-3 h-5 w-5 shrink-0 text-zinc-500 group-hover:text-zinc-300" />
+                <Circle className="mr-3 h-5 w-5 shrink-0 text-zinc-400 group-hover:text-zinc-500 dark:text-zinc-500 dark:group-hover:text-zinc-300" />
               )}
 
               {/* Task Text */}
               <span
                 className={`flex-1 overflow-hidden text-ellipsis whitespace-nowrap ${
                   task.isCompleted
-                    ? "text-zinc-500 line-through"
-                    : "text-zinc-100"
+                    ? "text-zinc-400 line-through dark:text-zinc-500"
+                    : "text-zinc-900 dark:text-zinc-100"
                 }`}
               >
                 {task.text}
               </span>
             </div>
 
-            {/* Delete Button: Now hidden until parent 'group' is hovered */}
+            {/* Delete Button */}
             <button
-              className="ml-2 rounded-full p-1 text-zinc-500 opacity-0 transition-all hover:bg-zinc-700 hover:text-red-500 group-hover:opacity-100"
+              className="ml-2 rounded-full p-1 text-zinc-400 opacity-0 transition-all hover:bg-zinc-200 hover:text-red-500 group-hover:opacity-100 dark:text-zinc-500 dark:hover:bg-zinc-700"
               onClick={() => deleteTask(task.id)}
-              // Starts invisible (opacity-0), becomes visible on group-hover
               title="Delete task"
             >
               <Trash2 className="h-4 w-4" />
@@ -168,7 +165,7 @@ export default function TodoList() {
           </li>
         ))}
         {tasks.length === 0 && (
-          <div className="py-4 text-center text-sm text-zinc-500">
+          <div className="py-4 text-center text-sm text-zinc-400 dark:text-zinc-500">
             No tasks for today.
           </div>
         )}

@@ -34,16 +34,16 @@ export default function NotesWidget() {
 
   if (isLoading) {
     return (
-      <div className="**h-full flex min-h-[12rem]** items-center justify-center">
-        <p className="text-sm text-zinc-500">Loading notes...</p>
+      <div className="flex h-full min-h-[12rem] items-center justify-center">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading notes...</p>
       </div>
     );
   }
 
   return (
-    <div className="**h-full w-full**">
+    <div className="h-full w-full">
       <Textarea
-        className="h-full min-h-48 w-full resize-none border-zinc-700 bg-zinc-800 text-zinc-100"
+        className="h-full min-h-48 w-full resize-none border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-500 focus-visible:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-400 dark:focus-visible:ring-indigo-500"
         onChange={(e) => setNote(e.target.value)}
         placeholder="Type your notes here... They are saved automatically."
         value={note}

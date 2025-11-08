@@ -1,4 +1,3 @@
-// actions/chatActions.ts
 "use server";
 
 import { ObjectId } from "mongodb";

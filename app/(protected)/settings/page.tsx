@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import {
   clearUserGeminiApiKeyAction,
+  deleteUserAccountAction,
   updateUserGeminiApiKeyAction,
   updateUserProfileAction,
 } from "@/action/userActions";
@@ -633,13 +634,32 @@ function NotificationsSettings() {
 // =========================================================================
 // --- SECTION 5: ACCOUNT SETTINGS (Danger Zone) ---
 // =========================================================================
+
 function AccountSettings() {
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // 2. IMPLEMENT THE DELETE HANDLER
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    alert("Delete account functionality is not yet implemented.");
-    setIsDeleting(false);
+
+    try {
+      // Call the server action
+      const result = await deleteUserAccountAction();
+
+      if (result.success) {
+       
+       
+        await signOut();
+      } else {
+      
+        setIsDeleting(false);
+      }
+    } catch (error) {
+     
+      setIsDeleting(false);
+    }
+    // We don't set isDeleting(false) on success because
+    // the component will unmount as the user is signed out.
   };
 
   return (
@@ -651,7 +671,7 @@ function AccountSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Sign Out Section */}
+        {/* Sign Out Section (Unchanged) */}
         <div className="flex items-center justify-between rounded-lg border border-border p-4">
           <div>
             <h4 className="font-semibold">Sign Out</h4>
@@ -664,7 +684,7 @@ function AccountSettings() {
           </Button>
         </div>
 
-        {/* Delete Account Section */}
+        {/* Delete Account Section (Unchanged, now functional) */}
         <div className="flex items-center justify-between rounded-lg border border-destructive/50 bg-destructive/10 p-4">
           <div>
             <h4 className="font-semibold text-destructive">Delete Account</h4>
@@ -694,7 +714,7 @@ function AccountSettings() {
                     "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   }
                   disabled={isDeleting}
-                  onClick={handleDeleteAccount}
+                  onClick={handleDeleteAccount} // 3. THIS NOW WORKS
                 >
                   {isDeleting ? "Deleting..." : "Delete Account"}
                 </AlertDialogAction>

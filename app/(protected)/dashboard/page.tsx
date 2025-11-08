@@ -5,6 +5,7 @@ import {
   AppWindow,
   ArrowUpRight,
   FileText,
+  Link2,
   Loader2,
   Package,
   Users,
@@ -65,7 +66,6 @@ export default function DashboardPage() {
 
   // 2. Auth/Session Effect (FIXED)
   useEffect(() => {
-
     if (!session?.user) {
       // Now we know it's not loading, and there's no user
       router.push("/login");
@@ -146,9 +146,9 @@ export default function DashboardPage() {
   // The 'isLoading' state is now managed by both session status and data fetching
   if (status || isLoading) {
     return (
-      <div className="flex min-h-[88vh] flex-col items-center justify-center bg-zinc-950 p-6 text-zinc-100">
-        <Loader2 className="h-10 w-10 animate-spin text-zinc-400" />
-        <p className="mt-4 text-zinc-400">
+      <div className="flex min-h-[88vh] flex-col items-center justify-center bg-zinc-50 p-6 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+        <Loader2 className="h-10 w-10 animate-spin text-zinc-500 dark:text-zinc-400" />
+        <p className="mt-4 text-zinc-500 dark:text-zinc-400">
           Loading your personalized dashboard...
         </p>
       </div>
@@ -158,8 +158,8 @@ export default function DashboardPage() {
 
   // 6. Render Page with Data (FIXED LAYOUT)
   return (
-    <div className="min-h-screen bg-zinc-950 p-4 text-zinc-100 md:p-6">
-      <h1 className="mb-6 font-bold text-3xl text-white">
+    <div className="min-h-screen bg-zinc-50 p-4 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 md:p-6">
+      <h1 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">
         Welcome back, {firstName}!
       </h1>
 
@@ -172,7 +172,7 @@ export default function DashboardPage() {
          */}
 
         {/* 1. DIGITAL CLOCK (Row 1, Columns 1-2) */}
-        <Card className="h-full border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-2">
+        <Card className="h-full border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-2">
           <CardContent className="flex h-full items-center justify-center p-0">
             <DigitalClock />
           </CardContent>
@@ -181,19 +181,19 @@ export default function DashboardPage() {
         {/* 2. Stat Cards (Row 1, Columns 3-4) */}
         {topStats.map((stat) => (
           <Card
-            className="h-full border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-1"
+            className="h-full border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-1"
             key={stat.title}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm text-zinc-400">
+              <CardTitle className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-zinc-500" />
+              <stat.icon className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-3xl">{stat.value}</div>
+              <div className="text-3xl font-bold">{stat.value}</div>
               <Link
-                className="mt-1 flex items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+                className="mt-1 flex items-center gap-1 text-xs text-zinc-400 transition-colors hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
                 href={stat.href}
               >
                 View all <ArrowUpRight className="h-3 w-3" />
@@ -209,10 +209,10 @@ export default function DashboardPage() {
          */}
 
         {/* 3. Recent Assets (Row 2, Columns 1-2) */}
-        <Card className="border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-2">
+        <Card className="border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Assets</CardTitle>
-            <CardDescription className="text-zinc-400">
+            <CardDescription className="text-zinc-500 dark:text-zinc-400">
               Latest uploads, ready to be used.
             </CardDescription>
           </CardHeader>
@@ -221,7 +221,7 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 {recentAssets.map((asset) => (
                   <Link
-                    className="-m-2 flex items-center gap-4 rounded-lg p-2 transition-colors hover:bg-zinc-800"
+                    className="-m-2 flex items-center gap-4 rounded-lg p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                     href="/assets"
                     key={asset.id}
                   >
@@ -235,28 +235,28 @@ export default function DashboardPage() {
                           src={asset.fileUrl}
                         />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded border border-zinc-700 bg-zinc-800">
-                          <FileText className="h-5 w-5 text-zinc-400" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded border border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800">
+                          <FileText className="h-5 w-5 text-zinc-500 dark:text-zinc-400" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium text-sm text-zinc-100">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                         {asset.title}
                       </p>
-                      <p className="truncate text-xs text-zinc-400">
+                      <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
                         {asset.description ||
                           `Uploaded ${getFormattedDate(asset.createdAt)}`}
                       </p>
                     </div>
-                    <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-500" />
+                    <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" />
                   </Link>
                 ))}
               </div>
             ) : (
               <div className="py-6 text-center">
-                <Package className="mx-auto h-10 w-10 text-zinc-600" />
-                <p className="mt-2 text-sm text-zinc-500">
+                <Package className="mx-auto h-10 w-10 text-zinc-400 dark:text-zinc-600" />
+                <p className="mt-2 text-sm text-zinc-400 dark:text-zinc-500">
                   No assets uploaded yet.
                 </p>
               </div>
@@ -267,19 +267,19 @@ export default function DashboardPage() {
         {/* 4. Remaining Stat Card (Row 2, Column 3) */}
         {remainingStat && (
           <Card
-            className="h-full border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-1"
+            className="h-full border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-1"
             key={remainingStat.title}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm text-zinc-400">
+              <CardTitle className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 {remainingStat.title}
               </CardTitle>
-              <remainingStat.icon className="h-4 w-4 text-zinc-500" />
+              <remainingStat.icon className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-3xl">{remainingStat.value}</div>
+              <div className="text-3xl font-bold">{remainingStat.value}</div>
               <Link
-                className="mt-1 flex items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-zinc-300"
+                className="mt-1 flex items-center gap-1 text-xs text-zinc-400 transition-colors hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
                 href={remainingStat.href}
               >
                 View all <ArrowUpRight className="h-3 w-3" />
@@ -289,12 +289,17 @@ export default function DashboardPage() {
         )}
 
         {/* 5. Stock Widget (Row 2, Column 4) */}
-        <Card className="h-full border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-base">Market Snapshot</CardTitle>
-            <CardDescription className="text-xs text-zinc-400">
-              Live market data
-            </CardDescription>
+        <Card className="h-full border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-base">Market Snapshot</CardTitle>
+              <CardDescription className="text-xs text-zinc-500 dark:text-zinc-400">
+                Live market data
+              </CardDescription>
+            </div>
+            <Link href={"/market-caps"}>
+              <ArrowUpRight className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+            </Link>
           </CardHeader>
           <CardContent>
             <StockWidget />
@@ -308,20 +313,20 @@ export default function DashboardPage() {
          */}
 
         {/* 6. SPOTIFY PLAYER (Row 3, Columns 1-2) */}
-        <Card className="border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-2">
+        <Card className="border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Spotify Connect</CardTitle>
-            <CardDescription className="text-xs text-zinc-400">
-              Web Playback Device
+            <CardTitle className="text-base">Saved Notes</CardTitle>
+            <CardDescription className="text-xs text-zinc-500 dark:text-zinc-400">
+              Your saved notes will appear here.
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4">
-            <SpotifyConnectPlayer accessToken={spotifyAccessToken} />
+          <CardContent className="px-4">
+            <SpotifyConnectPlayer />
           </CardContent>
         </Card>
 
         {/* 7. TO-DO LIST (Row 3, Columns 3-4) */}
-        <Card className="border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-2">
+        <Card className="border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-2">
           <CardContent className="h-full pt-2">
             <TodoList />
           </CardContent>
@@ -334,17 +339,17 @@ export default function DashboardPage() {
          */}
 
         {/* 8. STOPWATCH (Row 4, Column 1) */}
-        <Card className="h-full border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-1">
+        <Card className="h-full border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-1">
           <CardContent>
             <Stopwatch />
           </CardContent>
         </Card>
 
         {/* 9. NOTES WIDGET (Row 4, Columns 2-3) */}
-        <Card className="flex h-full flex-col border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-2">
+        <Card className="flex h-full flex-col border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-base">Quick Notes</CardTitle>
-            <CardDescription className="text-xs text-zinc-400">
+            <CardDescription className="text-xs text-zinc-500 dark:text-zinc-400">
               Your notes are saved locally in your browser.
             </CardDescription>
           </CardHeader>
@@ -354,10 +359,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* 10. ACTIVITY TRACKER (Row 4, Column 4) */}
-        <Card className="h-full border-zinc-800 bg-zinc-900 text-white shadow-lg lg:col-span-1">
+        <Card className="h-full border-zinc-200 bg-white text-zinc-900 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:text-white lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-base">Activity Tracker</CardTitle>
-            <CardDescription className="text-xs text-zinc-400">
+            <CardDescription className="text-xs text-zinc-500 dark:text-zinc-400">
               Your usage this session
             </CardDescription>
           </CardHeader>

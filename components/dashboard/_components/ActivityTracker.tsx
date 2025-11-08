@@ -31,37 +31,37 @@ export default function ActivityTracker() {
     <div className="flex flex-col space-y-4">
       {/* Time Spent */}
       <div className="flex items-center">
-        <Clock className="mr-3 h-5 w-5 shrink-0 text-indigo-400" />
+        <Clock className="mr-3 h-5 w-5 shrink-0 text-indigo-500 dark:text-indigo-400" />
         <div>
           <div
-            className="font-bold font-mono text-xl text-zinc-100"
+            className="font-mono text-xl font-bold text-zinc-900 dark:text-zinc-100"
             style={{ fontFeatureSettings: "'tnum' 1" }}
           >
             {formatTime(timeSpent)}
           </div>
-          <p className="text-xs text-zinc-400">Time on Page</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Time on Page</p>
         </div>
       </div>
 
       {/* Click Count */}
       <div className="flex items-center">
-        <MousePointerClick className="mr-3 h-5 w-5 shrink-0 text-indigo-400" />
+        <MousePointerClick className="mr-3 h-5 w-5 shrink-0 text-indigo-500 dark:text-indigo-400" />
         <div>
-          <div className="font-bold font-mono text-xl text-zinc-100">
+          <div className="font-mono text-xl font-bold text-zinc-900 dark:text-zinc-100">
             {clickCount}
           </div>
-          <p className="text-xs text-zinc-400">Total Clicks</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Total Clicks</p>
         </div>
       </div>
 
       {/* Key Press Count */}
       <div className="flex items-center">
-        <Keyboard className="mr-3 h-5 w-5 shrink-0 text-indigo-400" />
+        <Keyboard className="mr-3 h-5 w-5 shrink-0 text-indigo-500 dark:text-indigo-400" />
         <div>
-          <div className="font-bold font-mono text-xl text-zinc-100">
+          <div className="font-mono text-xl font-bold text-zinc-900 dark:text-zinc-100">
             {keyPressCount}
           </div>
-          <p className="text-xs text-zinc-400">Keystrokes</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Keystrokes</p>
         </div>
       </div>
     </div>

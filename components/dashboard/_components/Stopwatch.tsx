@@ -11,6 +11,23 @@ const DURATIONS = {
 };
 const POMODOROS_UNTIL_LONG_BREAK = 4;
 
+// --- Color mapping for each mode ---
+// These colors are vibrant and work on both light/dark backgrounds
+const MODE_COLORS = {
+  work: {
+    button: "bg-red-600",
+    icon: "text-red-400",
+  },
+  shortBreak: {
+    button: "bg-green-600",
+    icon: "text-green-400",
+  },
+  longBreak: {
+    button: "bg-blue-600",
+    icon: "text-blue-400",
+  },
+};
+
 // Helper function to format time (MM:SS)
 const formatTime = (timeInSeconds: number) => {
   const minutes = Math.floor(timeInSeconds / 60);
@@ -38,11 +55,9 @@ export default function PomodoroTimer() {
     if (!isRunning) {
       return;
     }
-    // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    // Start a new interval
     intervalRef.current = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
@@ -60,14 +75,10 @@ export default function PomodoroTimer() {
       return;
     }
 
-    // Timer hit zero
     setIsRunning(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-
-    // Optional: Play a sound here
-    // new Audio('/sounds/timer-complete.mp3').play();
 
     // Switch mode
     if (mode === "work") {
@@ -79,7 +90,6 @@ export default function PomodoroTimer() {
         setMode("shortBreak");
       }
     } else {
-      // Was on a shortBreak or longBreak
       setMode("work");
     }
   }, [timeLeft, mode, pomodoroCount]);
@@ -87,7 +97,7 @@ export default function PomodoroTimer() {
   // 3. Resets the timer when the mode changes
   useEffect(() => {
     setTimeLeft(DURATIONS[mode]);
-    setIsRunning(false); // Stop the timer when switching modes
+    setIsRunning(false);
   }, [mode]);
 
   // --- Control Functions ---
@@ -103,21 +113,20 @@ export default function PomodoroTimer() {
 
   const selectMode = (newMode: Mode) => {
     setMode(newMode);
-    // The useEffect for `mode` will handle resetting the time
   };
 
   // --- Active Button Styling ---
   const getButtonClass = (buttonMode: Mode) =>
     mode === buttonMode
-      ? "bg-indigo-600 text-white"
-      : "bg-zinc-700 text-zinc-300 hover:bg-zinc-600";
+      ? `${MODE_COLORS[mode].button} text-white` // Active class (red, green, blue)
+      : "bg-zinc-200 text-zinc-700 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"; // Inactive class
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-4">
       {/* Mode Selection Buttons */}
       <div className="mb-6 flex space-x-2">
         <button
-          className={`rounded-md px-3 py-1 font-medium text-sm transition-colors ${getButtonClass(
+          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${getButtonClass(
             "work"
           )}`}
           onClick={() => selectMode("work")}
@@ -125,7 +134,7 @@ export default function PomodoroTimer() {
           Work
         </button>
         <button
-          className={`rounded-md px-3 py-1 font-medium text-sm transition-colors ${getButtonClass(
+          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${getButtonClass(
             "shortBreak"
           )}`}
           onClick={() => selectMode("shortBreak")}
@@ -133,7 +142,7 @@ export default function PomodoroTimer() {
           Short Break
         </button>
         <button
-          className={`rounded-md px-3 py-1 font-medium text-sm transition-colors ${getButtonClass(
+          className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${getButtonClass(
             "longBreak"
           )}`}
           onClick={() => selectMode("longBreak")}
@@ -144,23 +153,27 @@ export default function PomodoroTimer() {
 
       {/* Timer Display */}
       <div className="text-center">
-        <Timer className="mx-auto mb-2 h-6 w-6 text-indigo-400" />
+        <Timer
+          className={`mx-auto mb-2 h-6 w-6 ${MODE_COLORS[mode].icon} transition-colors`}
+        />
         <div
-          className="font-bold font-mono text-5xl text-zinc-100"
+          className="font-mono text-5xl font-bold text-zinc-900 dark:text-zinc-100"
           style={{ fontFeatureSettings: "'tnum' 1" }}
         >
           {formatTime(timeLeft)}
         </div>
-        <p className="mt-1 text-xs text-zinc-400">Minutes:Seconds</p>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Minutes:Seconds
+        </p>
       </div>
 
-      {/* Control Buttons */}
+      {/* Control Buttons (MODIFIED) */}
       <div className="mt-6 flex space-x-4">
         <button
-          className={`rounded-full p-3 text-white transition-colors ${
+          className={`rounded-full p-3 text-white transition-all ${
             isRunning
-              ? "bg-red-600 hover:bg-red-700"
-              : "bg-green-600 hover:bg-green-700"
+              ? "bg-yellow-500 hover:bg-yellow-600" // Pause button is yellow
+              : `${MODE_COLORS[mode].button} hover:opacity-80` // Play button matches active mode
           }`}
           onClick={togglePlayPause}
         >
@@ -172,7 +185,7 @@ export default function PomodoroTimer() {
         </button>
 
         <button
-          className="rounded-full bg-zinc-700 p-3 text-white transition-colors hover:bg-zinc-600"
+          className="rounded-full bg-zinc-200 p-3 text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-white dark:hover:bg-zinc-600"
           onClick={resetTimer}
           title="Reset"
         >

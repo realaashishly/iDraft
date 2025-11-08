@@ -304,3 +304,59 @@ export async function updateUserProfileAction(data: UpdateUserData) {
     };
   }
 }
+
+
+
+/**
+ * Deletes the authenticated user's account and all associated data.
+ * This removes their data from the 'user' and 'accounts' collections.
+ * @returns A promise resolving to an object with success status and a message.
+ */
+export async function deleteUserAccountAction() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user?.id) {
+    return {
+      success: false,
+      message: "Authentication required.",
+    };
+  }
+
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB_NAME);
+    const usersCollection = db.collection("user");
+    const accountsCollection = db.collection("accounts"); // NextAuth.js default
+
+    const userId = new ObjectId(session.user.id);
+
+    // 1. Delete all linked OAuth accounts (from 'accounts' collection)
+    // This ensures no orphaned data is left.
+    await accountsCollection.deleteMany({ userId: userId });
+
+    // 2. Delete the user document itself
+    const deleteResult = await usersCollection.deleteOne({ _id: userId });
+
+    if (deleteResult.deletedCount === 0) {
+      // This case should rarely happen if a session exists, but it's good practice.
+      return {
+        success: false,
+        message: "Failed to delete account. User not found.",
+      };
+    }
+
+    // You don't need to revalidate paths, as the user will be logged out.
+    return {
+      success: true,
+      message: "Your account has been successfully deleted.",
+    };
+  } catch (error) {
+    console.error("Account deletion failed:", error); // Log the error for debugging
+    return {
+      success: false,
+      message: "A server error occurred while deleting the account.",
+    };
+  }
+}

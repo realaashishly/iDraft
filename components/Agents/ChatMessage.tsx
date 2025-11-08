@@ -99,18 +99,19 @@ export default function ChatMessage({
         <div
           className={`relative max-w-[70%] rounded-lg p-3 shadow-sm md:max-w-[65%] ${
             isUser
-              ? "rounded-br-none bg-zinc-600 text-zinc-50" // Removed 'order-1'
-              : "rounded-bl-none border border-zinc-700 bg-zinc-800" // Removed 'order-2'
+              ? "rounded-br-none bg-blue-600 text-white dark:bg-zinc-600 dark:text-zinc-50" // User bubble
+              : "rounded-bl-none border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800" // AI bubble
           }`}
         >
           {!isUser && (
-            <p className="mb-1 font-medium text-xs text-zinc-500">
+            <p className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
               {agentName} {modelInfo && `(${modelInfo})`}
             </p>
           )}
 
           {message.text && (
-            <div className="prose prose-sm prose-invert wrap-break-word prose-leading-relaxed prose-p:my-2">
+            // Added prose-zinc for light mode theming
+            <div className="prose prose-sm prose-zinc wrap-break-word prose-leading-relaxed prose-p:my-2 dark:prose-invert">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.text}
               </ReactMarkdown>
@@ -120,7 +121,9 @@ export default function ChatMessage({
           {message.fileName && (
             <div
               className={`mt-2 flex items-center gap-1 border-t pt-1 text-xs opacity-80 ${
-                isUser ? "border-zinc-500/50" : "border-zinc-700"
+                isUser
+                  ? "border-blue-500/50 dark:border-zinc-500/50" // User file border
+                  : "border-zinc-300 dark:border-zinc-700" // AI file border
               }`}
             >
               <Paperclip className="h-3 w-3" /> {message.fileName}
@@ -135,12 +138,12 @@ export default function ChatMessage({
             isUser ? "justify-end" : "justify-start"
           )}
         >
-          <p className={"text-[10px] text-zinc-500"}>{timeString}</p>
+          <p className={"text-[10px] text-zinc-500 dark:text-zinc-400"}>{timeString}</p>
 
           {message.text && (
             <Button
               aria-label="Copy message"
-              className="h-5 w-5 cursor-pointer p-0 text-zinc-500 transition-colors hover:text-zinc-100"
+              className="h-5 w-5 cursor-pointer p-0 text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               onClick={handleCopy}
               size="icon-sm"
               variant="ghost"

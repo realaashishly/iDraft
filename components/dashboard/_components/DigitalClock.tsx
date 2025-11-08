@@ -45,33 +45,33 @@ export default function DigitalClock() {
       <div className="relative z-10 w-full">
         {/* Time Display Section */}
         {/* Responsive text size: smaller on mobile (text-6xl), larger on lg (text-8xl) where it has 2 columns */}
-        <div className="flex items-baseline justify-center font-mono text-zinc-200">
-          <span className="font-extrabold text-6xl tracking-tight **lg:text-8xl** sm:text-7xl">
+        <div className="flex items-baseline justify-center font-mono text-zinc-900 dark:text-zinc-200">
+          <span className="text-6xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl">
             {hour}
           </span>
 
           <span
-            className={`mx-1 font-light text-5xl text-zinc-400 transition-opacity duration-500 **lg:text-7xl** sm:mx-2 sm:text-6xl ${
+            className={`mx-1 text-5xl font-light text-zinc-500 transition-opacity duration-500 dark:text-zinc-400 sm:mx-2 sm:text-6xl lg:text-7xl ${
               isEvenSecond ? "opacity-100" : "opacity-40"
             }`}
           >
             :
           </span>
 
-          <span className="font-extrabold text-6xl tracking-tight **lg:text-8xl** sm:text-7xl">
+          <span className="text-6xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl">
             {minute}
           </span>
 
-          <span className="ml-2 self-end font-light text-2xl text-zinc-500 **lg:text-4xl** sm:ml-3 sm:text-3xl">
+          <span className="ml-2 self-end text-2xl font-light text-zinc-400 dark:text-zinc-500 sm:ml-3 sm:text-3xl lg:text-4xl">
             {ampm}
           </span>
         </div>
 
         {/* Separator Line */}
-        <div className="my-4 h-px w-full bg-zinc-700/50" />
+        <div className="my-4 h-px w-full bg-zinc-200 dark:bg-zinc-700/50" />
 
         {/* Date and Icon Section */}
-        <div className="flex items-center justify-center text-center font-sans text-zinc-400 tracking-widest">
+        <div className="flex items-center justify-center text-center font-sans tracking-widest text-zinc-500 dark:text-zinc-400">
           <Clock className="mr-3 inline-block h-4 w-4" />
           <span className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs uppercase sm:text-sm lg:text-base">
             {formattedDate}

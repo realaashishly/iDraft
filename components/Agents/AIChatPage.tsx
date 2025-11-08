@@ -307,13 +307,13 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
     if (!agent) {
       return (
         <div className="flex h-full items-center justify-center">
-          <p className="text-zinc-400">Agent data not found.</p>
+          <p className="text-zinc-500 dark:text-zinc-400">Agent data not found.</p>
         </div>
       );
     }
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-zinc-400">Please log in to access the chat.</p>
+        <p className="text-zinc-500 dark:text-zinc-400">Please log in to access the chat.</p>
       </div>
     );
   }
@@ -398,8 +398,8 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
             {!showConfirmation && (
               <>
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 font-medium text-sm">
-                    <Key className="h-4 w-4 text-blue-400" /> Set Gemini API Key
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <Key className="h-4 w-4 text-blue-500 dark:text-blue-400" /> Set Gemini API Key
                   </label>
                   <div className="flex gap-2">
                     <Input
@@ -423,7 +423,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
 
                   {/* --- THIS IS THE NEWLY ADDED PART --- */}
                   {savedApiKey ? (
-                    <p className="mt-2 text-xs text-zinc-400">
+                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                       Current key:{" "}
                       <span className="font-mono">{savedApiKey}</span>
                     </p>
@@ -438,8 +438,8 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                     <p
                       className={`text-xs ${
                         keyStatus.startsWith("✅")
-                          ? "text-green-500"
-                          : "text-red-500"
+                          ? "text-green-600 dark:text-green-500"
+                          : "text-red-600 dark:text-red-500"
                       }`}
                     >
                       {keyStatus}
@@ -448,7 +448,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 font-medium text-sm">
+                  <label className="flex items-center gap-2 text-sm font-medium">
                     <Zap className="h-4 w-4 text-primary" /> Change Model
                   </label>
                   <DropdownMenu>
@@ -462,6 +462,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                         <ChevronDown className="h-4 w-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
+                    {/* Assuming DropdownMenuContent is themed by shadcn */}
                     <DropdownMenuContent className="w-[420px]">
                       <DropdownMenuRadioGroup
                         onValueChange={handleModelChange}
@@ -481,7 +482,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 </div>
 
                 <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
-                  <span className="flex items-center gap-2 font-medium text-sm">
+                  <span className="flex items-center gap-2 text-sm font-medium">
                     <BookMarked className="h-4 w-4 text-primary" /> Save Current
                     Prompts
                   </span>
@@ -491,7 +492,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 </div>
 
                 <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-                  <h4 className="mb-4 flex items-center gap-2 font-semibold text-destructive text-sm">
+                  <h4 className="mb-4 flex items-center gap-2 text-sm font-semibold text-destructive">
                     <Trash2 className="h-4 w-4" /> Delete Chat History
                   </h4>
                   <Button
@@ -507,10 +508,10 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
 
             {showConfirmation && (
               <div className="space-y-4 pt-4">
-                <h4 className="flex items-center gap-2 font-bold text-destructive text-lg">
+                <h4 className="flex items-center gap-2 text-lg font-bold text-destructive">
                   <Trash2 className="h-5 w-5" /> Are you sure?
                 </h4>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-sm text-muted-foreground">
                   This action cannot be undone. All **
                   {messages.length}** messages with **
                   {agent.name}** will be permanently removed from the database.
@@ -567,9 +568,9 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
   };
 
   return (
-    <div className="relative flex h-[90vh] flex-col overflow-hidden bg-zinc-950 font-sans text-zinc-300">
+    <div className="relative flex h-[90vh] flex-col overflow-hidden bg-white font-sans text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
       <Button
-        className="-ml-2 absolute top-0 left-0 justify-start text-zinc-400 hover:text-white"
+        className="absolute top-0 left-0 -ml-2 justify-start text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
         disabled={isSending || isLoadingHistory}
         onClick={() => router.back()}
         variant="ghost"
@@ -582,12 +583,12 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
 
       {/* Message List */}
       <div
-        className="scrollbar-thin scrollbar-thumb-transparent scrollbar-track-transparent md:scrollbar-default md:scrollbar-thumb-zinc-700 md:scrollbar-track-zinc-900 mx-auto w-full max-w-2xl flex-1 space-y-4 overflow-y-auto p-4"
+        className="scrollbar-thin scrollbar-thumb-transparent scrollbar-track-transparent md:scrollbar-default md:scrollbar-thumb-zinc-300 md:scrollbar-track-zinc-100 dark:md:scrollbar-thumb-zinc-700 dark:md:scrollbar-track-zinc-900 mx-auto w-full max-w-2xl flex-1 space-y-4 overflow-y-auto p-4"
         style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
       >
         {/* Conditional Rendering: Loading, Welcome, or History */}
         {isLoadingHistory ? (
-          <div className="flex h-full items-center justify-center text-zinc-500">
+          <div className="flex h-full items-center justify-center text-zinc-500 dark:text-zinc-400">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading
             conversation...
           </div>
@@ -602,10 +603,10 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
               />
             </div>
 
-            <h2 className="mb-2 font-semibold text-white text-xl">
+            <h2 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-white">
               Meet {agent.name}, {agent.title}
             </h2>
-            <p className="max-w-xl text-zinc-400">{agent.description}</p>
+            <p className="max-w-xl text-zinc-500 dark:text-zinc-400">{agent.description}</p>
           </div>
         ) : (
           messages.map((msg) => (
@@ -635,10 +636,10 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
             </div>
             <div
               className={
-                "rounded-lg rounded-bl-none border border-zinc-700 bg-zinc-800 p-3 shadow-sm"
+                "rounded-lg rounded-bl-none border border-zinc-200 bg-zinc-100 p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-800"
               }
             >
-              <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+              <Loader2 className="h-4 w-4 animate-spin text-zinc-500 dark:text-zinc-400" />
             </div>
           </div>
         )}
@@ -646,7 +647,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
       </div>
 
       {/* Input Area Container */}
-      <div className="w-full shrink-0 bg-linear-to-t from-zinc-950 via-zinc-950/95 to-zinc-950/0 px-4 pt-2 pb-4">
+      <div className="w-full shrink-0 bg-gradient-to-t from-white via-white/95 to-white/0 px-4 pt-2 pb-4 dark:from-zinc-950 dark:via-zinc-950/95 dark:to-zinc-950/0">
         <div className="mx-auto max-w-2xl">
           <div className="group relative">
             <form className="relative" onSubmit={handleSendMessage}>
@@ -659,9 +660,9 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                 ref={fileInputRef}
                 type="file"
               />
-              <div className="flex flex-col overflow-hidden rounded-xl border border-zinc-700 bg-zinc-800 shadow-lg transition-all duration-300 focus-within:ring-1 focus-within:ring-zinc-500">
+              <div className="flex flex-col overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-lg transition-all duration-300 focus-within:ring-1 focus-within:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">
                 <Textarea
-                  className="max-h-[150px] min-h-[60px] w-full resize-none bg-transparent p-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="max-h-[150px] min-h-[60px] w-full resize-none bg-transparent p-3 text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-zinc-100"
                   disabled={!canSendMessage || isSending || isLoadingHistory}
                   maxRows={6}
                   onChange={handleInputChange}
@@ -676,10 +677,10 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                   value={inputText}
                 />
                 {attachedFile && (
-                  <div className="mx-3 mt-1 mb-2 flex items-center justify-between rounded-md border border-zinc-600 border-dashed bg-zinc-700/50 p-1.5 px-2 text-xs shadow-sm">
+                  <div className="mx-3 mt-1 mb-2 flex items-center justify-between rounded-md border border-dashed border-zinc-300 bg-zinc-100 p-1.5 px-2 text-xs shadow-sm dark:border-zinc-600 dark:bg-zinc-700/50">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <Paperclip className="h-3 w-3 shrink-0 text-zinc-400" />
-                      <span className="truncate text-zinc-300">
+                      <Paperclip className="h-3 w-3 shrink-0 text-zinc-500 dark:text-zinc-400" />
+                      <span className="truncate text-zinc-700 dark:text-zinc-300">
                         {attachedFile.name}
                       </span>
                       <span className="shrink-0 text-xs text-zinc-500">
@@ -688,7 +689,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                     </div>
                     <Button
                       aria-label="Remove attached file"
-                      className="h-5 w-5 rounded-full text-zinc-500 hover:bg-zinc-600/50 hover:text-red-400"
+                      className="h-5 w-5 rounded-full text-zinc-500 hover:bg-zinc-200 hover:text-red-400 dark:hover:bg-zinc-600/50"
                       disabled={isSending || isLoadingHistory}
                       onClick={handleRemoveFile}
                       size="icon"
@@ -698,12 +699,12 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                     </Button>
                   </div>
                 )}
-                <div className="flex items-center justify-between border-zinc-700/60 border-t p-2">
+                <div className="flex items-center justify-between border-t border-zinc-200/60 p-2 dark:border-zinc-700/60">
                   <div className="flex items-center gap-1">
                     {/* Settings Button */}
                     <Button
                       aria-label="Chat settings"
-                      className="h-8 w-8 shrink-0 rounded-full text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-zinc-100"
+                      className="h-8 w-8 shrink-0 rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                       disabled={isSending || isLoadingHistory}
                       onClick={() => setIsSettingsModalOpen(true)}
                       size="icon"
@@ -715,7 +716,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
 
                     <Button
                       aria-label="Attach file"
-                      className="h-8 w-8 shrink-0 rounded-full text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-zinc-100"
+                      className="h-8 w-8 shrink-0 rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
                       disabled={
                         !canSendMessage || isSending || isLoadingHistory
                       }
@@ -729,7 +730,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          className="flex h-8 shrink-0 items-center gap-1 rounded-md p-1 font-medium text-xs text-zinc-400 hover:bg-zinc-700/50 hover:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          className="flex h-8 shrink-0 items-center gap-1 rounded-md p-1 text-xs font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-zinc-400 dark:hover:bg-zinc-700/50 dark:hover:text-zinc-100"
                           disabled={isSending || isLoadingHistory}
                           variant="ghost"
                         >
@@ -741,7 +742,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="start"
-                        className="w-48 border-zinc-700 bg-zinc-900 text-zinc-200"
+                        className="w-48 border-zinc-200 bg-white text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                         sideOffset={8}
                       >
                         <DropdownMenuRadioGroup
@@ -750,7 +751,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                         >
                           {MODELS.map((model) => (
                             <DropdownMenuRadioItem
-                              className="cursor-pointer focus:bg-zinc-800 focus:text-zinc-100"
+                              className="cursor-pointer focus:bg-zinc-100 focus:text-zinc-900 dark:focus:bg-zinc-800 dark:focus:text-zinc-100"
                               key={model.id}
                               value={model.id}
                             >
@@ -772,7 +773,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
                     )}
                     <Button
                       aria-label="Send message"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-zinc-50 transition-opacity hover:bg-zinc-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800 text-zinc-50 transition-opacity hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-700 dark:hover:bg-zinc-600"
                       disabled={
                         !(
                           (inputText.trim() || attachedFile) &&

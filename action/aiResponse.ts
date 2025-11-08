@@ -1,4 +1,3 @@
-// actions/aiResponse.ts (Ensure this version is saved and deployed)
 "use server";
 
 import { Buffer } from "node:buffer";
@@ -11,7 +10,7 @@ Object.assign(generateAiContent, { maxDuration: 60 });
 Object.assign(generateAiContentByUserAPI, { maxDuration: 60 });
 
 // --- 2. Utility Function: File to Generative Part ---
-async function fileToGenerativePart(file: File): Promise<Part> {
+export async function fileToGenerativePart(file: File): Promise<Part> {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   return {

@@ -1,4 +1,3 @@
-// actions/assetActions.ts
 "use server";
 
 import { ObjectId } from "mongodb";

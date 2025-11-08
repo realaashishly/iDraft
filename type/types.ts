@@ -17,28 +17,30 @@ export type AiResponse = {
   error?: string;
 };
 
-export type CreateAppPayload = {
-  appName: string;
-  appDescription?: string | null;
-  appLink: string;
-  logoUrl: string;
-};
-
-export type App = {
+export interface App {
   id: string;
   appName: string;
-  appDescription?: string | null;
+  appDescription: string;
   appLink: string;
   logoUrl: string;
-  createdAt: string;
-};
+  createdAt: string; // Ensure this is part of your main App type
+}
 
-export type UpdateAppPayload = {
+// Data for creating a new app
+export interface CreateAppPayload {
+  appName: string;
+  appDescription: string;
+  appLink: string;
+  logoUrl: string;
+}
+
+// Data for updating an app (all fields optional)
+export interface UpdateAppPayload {
   appName?: string;
-  appDescription?: string | null;
+  appDescription?: string;
   appLink?: string;
   logoUrl?: string;
-};
+}
 
 export type Asset = {
   id: string;
@@ -187,4 +189,30 @@ export type SessionWithToken = {
 
 export type Todo = {
   isCompleted: boolean;
+}
+
+export type WebsiteMetadata = {
+  title: string;
+  description: string;
+  thumbnail?: string;
+  domain?: string;
+}
+
+
+export interface CryptoAsset {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number;
+  volume24h: number;
+  marketCap: number;
+  circulatingSupply: number;
+  iconUrl: string;
+  sparkline: number[] | null;
+  
+  // --- MODIFICATION ---
+  // Specific fields for each timeframe
+  change_1d: number | null;  // 24h
+  change_7d: number | null;
+  change_30d: number | null; // 30d (for 1M)
 }
