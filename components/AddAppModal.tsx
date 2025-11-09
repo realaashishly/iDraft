@@ -166,6 +166,7 @@ export function AddAppModal({
         const actionResult = await createAppAction({
           ...data,
           logoUrl,
+          appDescription: data.appDescription || "",
         });
 
         if (!actionResult.success) throw new Error(actionResult.error);
