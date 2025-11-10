@@ -131,7 +131,7 @@ export default function ChatMessage({
           )}
         </div>
 
-        {/* --- Actions and Timing Row (NOW OUTSIDE) --- */}
+       
         <div
           className={cn(
             "flex items-center gap-2",

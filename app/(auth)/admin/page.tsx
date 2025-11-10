@@ -13,10 +13,7 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Handles the form submission event.
-   * Prevents default form behavior and attempts to sign in using credentials.
-   */
+  
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

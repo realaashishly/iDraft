@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "@/lib/auth-client";
 import {
     Home,
     Menu,
@@ -17,7 +18,8 @@ import {
     Pin, // Connected Icon
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 
 interface SidebarProps {
@@ -54,6 +56,11 @@ interface SidebarSectionProps {
 export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
     const pathname = usePathname();
 
+    const { data: session } = useSession();
+    const router = useRouter();
+
+
+
     
 
     // 3. Disconnect Handler (REMOVED)
@@ -67,6 +74,13 @@ export default function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         {name: 'Market', icon: Plug, href: '/market-caps'},
         {name: 'Profile', icon: User2, href: '/profile'}
     ];
+
+//     useEffect(() => {
+//     if (!session?.user) {
+//       // Now we know it's not loading, and there's no user
+//       router.push("/login");
+//     }
+//   }, [session, router]);
 
 
     return (

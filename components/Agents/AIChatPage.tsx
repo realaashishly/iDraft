@@ -647,7 +647,7 @@ export default function AIChatInterface({ agent }: AIChatInterfaceProps) {
       </div>
 
       {/* Input Area Container */}
-      <div className="w-full shrink-0 bg-gradient-to-t from-white via-white/95 to-white/0 px-4 pt-2 pb-4 dark:from-zinc-950 dark:via-zinc-950/95 dark:to-zinc-950/0">
+      <div className="w-full shrink-0 bg-linear-to-t from-white via-white/95 to-white/0 px-4 pt-2 pb-4 dark:from-zinc-950 dark:via-zinc-950/95 dark:to-zinc-950/0">
         <div className="mx-auto max-w-2xl">
           <div className="group relative">
             <form className="relative" onSubmit={handleSendMessage}>
